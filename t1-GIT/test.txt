@@ -1,4 +1,4 @@
 New test file on main branch
 Update in the new test branch
 Update in the latest test branch
-using the reset option
+using the revert option

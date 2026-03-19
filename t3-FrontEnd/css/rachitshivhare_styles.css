@@ -3,6 +3,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+    scroll-behavior: smooth;
 }
 
 /* Here I defined css variables to easily update new themes and maintain consistency through out the project */
@@ -15,6 +16,8 @@
     --color-two: #e8a838;
     --font-one: 'Georgia', 'Times New Roman';
     --font-two: 'Trebuchet MS', 'Segoe UI';
+    --round: 8px;
+    --shadow: rgba(26, 39, 68, 0.10);
 }
 
 /* Used body selector to modify the background text color, size etc throughout the body */
@@ -73,3 +76,79 @@ header img {
     margin-top: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
+
+
+/* Navigation section */
+
+nav{
+    background-color: var(--color-one);
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-top: 1px solid rgba(255,255,255,0.00);
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: center;
+    justify-content: center;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* direct child combinator means this css will directly be applied to elements following exactly this chronological order */
+nav > ul > li {
+    position: relative;
+}
+
+nav a {
+    display: block;
+    color: #c8d6f0;
+    text-decoration: none;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.25s ease, background-color 0.25s ease;
+}
+
+nav a:hover {
+    color: var(--color-two);
+    background-color: rgba(255,255,255,0.05);
+}
+
+nav ul ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #111e38;
+    flex-direction: column;
+    min-width: 180px;
+    border-radius: 0 0 var(--round) var(--round);
+    box-shadow: 0 6px 20px var(--shadow);
+    z-index: 200;
+}
+
+nav li:hover > ul {
+    display: flex;
+}
+
+nav ul ul li a {
+    padding: 10px 10px;
+    font-size: 0.82rem;
+    color: #a8bcd8;
+    border-left: 3px solid transparent;
+}
+
+nav ul ul li a:hover {
+    color: var(--color-two);
+    /* border-left-color: var(--color-two); */
+    background-color: rgba(255,255,255,0.04);
+}
+

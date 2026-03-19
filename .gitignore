@@ -1,5 +1,4 @@
 .env
-HTML_ASSIGNMENT_2026.pdf
-HTML_SESSION_2026.pdf
-HTML_Evaluation_Criteria_2026.pdf
-Rachit Shivhare.pdf
+*.pdf
+**/Files
+**/Docs

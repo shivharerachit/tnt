@@ -126,13 +126,30 @@ students.forEach(function (student) {
 });
 
 console.log("SUBJECT-WISE HIGHEST SCORE IN THE CLASS");
-const subjects = students[0].marks.map(function (markObject) {
-    return markObject.subject;
-});
+const subjects = [];
+for (let i = 0; i < students[0].marks.length; i++) {
+    subjects.push(students[0].marks[i].subject);
+}
 
-subjects.forEach(function (subject) {
-    let highestScore = -1;
-    let topperName = "";
+for (let s = 0; s < subjects.length; s++) {
+  const subject = subjects[s];
+  let highestScore = -1;
+  let topperName = "";
 
-     
-});
+  for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+
+    for (let j = 0; j < student.marks.length; j++) {
+      const mark = student.marks[j];
+
+      if (mark.subject === subject && mark.score > highestScore) {
+        highestScore = mark.score;
+        topperName = student.name;
+      }
+    }
+  }
+
+  console.log(`Highest in ${subject}: ${topperName} (${highestScore})`);
+}
+
+console.log("SUBJECT-WISE AVERAGE SCORE");

@@ -92,3 +92,42 @@ function renderProducts(productsToShow) {
         grid.appendChild(card);
     }
 }
+
+function applyFiltersAndRender() {
+  var searchText     = document.getElementById("searchInput").value.toLowerCase();
+  var selectedCategory = document.getElementById("categoryFilter").value;
+  var lowStockOnly   = document.getElementById("lowStockFilter").checked;
+  var sortOption     = document.getElementById("sortSelect").value;
+
+  var filtered = products;
+
+  if (searchText !== "") {
+    filtered = filtered.filter(function(p) {
+      return p.name.toLowerCase().indexOf(searchText) !== -1;
+    });
+  }
+
+  if (selectedCategory !== "all") {
+    filtered = filtered.filter(function(p) {
+      return p.category === selectedCategory;
+    });
+  }
+
+  if (lowStockOnly) {
+    filtered = filtered.filter(function(p) {
+      return p.stock < 5;
+    });
+  }
+
+  if (sortOption === "priceLow") {
+    filtered.sort(function(a, b) { return a.price - b.price; });
+  } else if (sortOption === "priceHigh") {
+    filtered.sort(function(a, b) { return b.price - a.price; });
+  } else if (sortOption === "nameAZ") {
+    filtered.sort(function(a, b) { return a.name.localeCompare(b.name); });
+  } else if (sortOption === "nameZA") {
+    filtered.sort(function(a, b) { return b.name.localeCompare(a.name); });
+  }
+
+  renderProducts(filtered);
+}

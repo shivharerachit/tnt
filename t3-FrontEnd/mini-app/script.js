@@ -188,3 +188,19 @@ document.getElementById("addProductBtn").addEventListener("click", function() {
   applyFiltersAndRender();
   updateAnalytics();
 });
+
+
+document.getElementById("searchInput").addEventListener("input", applyFiltersAndRender);
+document.getElementById("categoryFilter").addEventListener("change", applyFiltersAndRender);
+document.getElementById("lowStockFilter").addEventListener("change", applyFiltersAndRender);
+document.getElementById("sortSelect").addEventListener("change", applyFiltersAndRender);
+
+var loadingMsg = document.getElementById("loadingMsg");
+loadingMsg.style.display = "block";
+
+fetchProducts().then(function(loadedProducts) {
+  products = loadedProducts;
+  loadingMsg.style.display = "none";
+  applyFiltersAndRender();
+  updateAnalytics();
+});

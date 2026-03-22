@@ -72,7 +72,7 @@ function getAverage(student) {
 }
 
 function getFailedSubject(student) {
-    let failedSubjects;
+    let failedSubjects = [];
     for (let i = 0; i < student.marks.lenth; i++) {
         if (student.marks[i].score <= 40) {
             failedSubjects.push(student.marks[i].subject);
@@ -96,21 +96,17 @@ function getGrade(student) {
         if (student.attendance < 75) {
             return `Fail (Low Attendance) (Failed in ${failedText}) `;
         }
+        return `Fail (Failed in ${failedText}) `;
     }
 
     if (student.attendance < 75) {
         return `Fail (Low Attendance: ${student.attendance})`;
     }
 
-    if (avg >= 85) {
-        return "A";
-    } else if (avg >= 70) {
-        return "B";
-    } else if (avg >= 50) {
-        return "C";
-    } else {
-        return "Fail";
-    }
+    if (avg >= 85) return "A";
+    if (avg >= 70) return "B";
+    if (avg >= 50) return "C";
+    return "Fail";
 }
 
 console.log("TOTAL MARKS FOR EACH STUDENT");
@@ -171,3 +167,47 @@ for (let s = 0; s < subjects.length; s++) {
     const subjectAvg = Math.round((totalScore / students.length) * 10) / 10;
     console.log(`Average ${subject} Score: ${subjectAvg}`);
 }
+
+console.log("OVERALL CLASS TOPPER");
+let classTopper = students[0];
+let highestTotal = getTotalMarks(students[0]);
+
+for (let i = 1; i < students.length; i++) {
+    const currentTotal = getTotalMarks(students[i]);
+    if (currentTotal > highestTotal) {
+        highestTotal = currentTotal;
+        classTopper = students[i];
+    }
+}
+
+console.log(`Class Topper: ${classTopper.name} with ${highestTotal} marks`);
+
+console.log("GRADE ASSIGNMENT");
+
+for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+    console.log(student.name + " Grade: " + getGrade(student));
+}
+
+console.log("FULL STUDENT REPORT SUMMARY");
+
+for (let i = 0; i < students.length; i++) {
+    const student = students[i];
+    const total = getTotalMarks(student);
+    const avg = getAverage(student);
+    const grade = getGrade(student);
+
+    console.log("\n--- " + student.name + " ---");
+    console.log("  Attendance : " + student.attendance + "%");
+
+    for (let j = 0; j < student.marks.length; j++) {
+        const markObj = student.marks[j];
+        console.log("  " + markObj.subject.padEnd(10) + ": " + markObj.score);
+    }
+
+    console.log("  Total      : " + total);
+    console.log("  Average    : " + avg);
+    console.log("  Grade      : " + grade);
+}
+
+console.log("Analysis Complete");

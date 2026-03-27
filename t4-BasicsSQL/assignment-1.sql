@@ -99,8 +99,8 @@ INSERT INTO Products (name, description, price, category) VALUES
 ('Office Chair', 'Adjustable ergonomic office chair', 5999.00, 'Furniture'),
 ('LED Desk Lamp', 'Touch control desk lamp with 3 brightness levels', 899.00, 'Home'),
 ('Yoga Mat', 'Non-slip yoga mat 6mm thickness', 699.00, 'Fitness'),
-('Gaming Headset', 'Over-ear gaming headset with mic', 2199.00, 'Electronics'),
-('Power Bank', '10000mAh fast charging power bank', 1499.00, 'Electronics'),
+('Gaming Headset', 'Over-ear gaming headset with mic', 459.00, 'Electronics'),
+('Power Bank', '10000mAh fast charging power bank', 499.00, 'Electronics'),
 ('Coffee Mug', 'Ceramic coffee mug 350ml', 249.00, 'Kitchen'),
 ('Phone Case', 'Shockproof mobile phone case', 399.00, 'Accessories'),
 ('USB-C Cable', '1 meter braided USB-C charging cable', 199.00, 'Electronics'),
@@ -121,24 +121,91 @@ INSERT INTO Orders (customer_id, product_id, quantity, order_date, status, payme
 (10, 10, 1, '2026-03-05', 'Success', 'Credit', 5999.00),
 (11, 11, 2, '2026-03-06', 'Success', 'COD', 1798.00),
 (12, 12, 1, '2026-03-06', 'Cancel', 'UPI', 699.00),
-(13, 13, 1, '2026-03-07', 'Success', 'Debit', 2199.00),
-(14, 14, 2, '2026-03-07', 'Pending', 'Credit', 2998.00),
+(13, 13, 1, '2026-03-07', 'Success', 'Debit', 459.00),
+(14, 14, 2, '2026-03-07', 'Pending', 'Credit', 998.00),
 (15, 15, 3, '2026-03-08', 'Success', 'UPI', 747.00),
-(16, 16, 2, '2026-03-08', 'Success', 'COD', 798.00),
-(17, 17, 5, '2026-03-09', 'Pending', 'Debit', 995.00),
-(18, 18, 1, '2026-03-09', 'Success', 'Credit', 4499.00),
-(19, 19, 2, '2026-03-10', 'Success', 'UPI', 598.00),
-(20, 20, 1, '2026-03-10', 'Pending', 'COD', 1199.00);
+(3, 2, 1, '2026-03-09', 'Success', 'Credit', 2499.00),
+(7, 1, 1, '2026-03-09', 'Pending', 'UPI', 799.00),
+(10, 6, 1, '2026-03-10', 'Success', 'Debit', 3499.00),
+(12, 3, 2, '2026-03-10', 'Pending', 'COD', 3198.00),
+(15, 7, 1, '2026-03-10', 'Success', 'UPI', 499.00);
 
 -- Count the number of products as product_count in each category
 SELECT p.category, COUNT(*) 
 AS product_count
-FROM products p
+FROM Products p
 GROUP BY p.category;
 
 -- Retrieve all products that belong to the 'Electronics' category, have a price between $50 and $500, and whose name contains the letter 'a'
+
 SELECT * 
-FROM products p
-WHERE p.category = 'Electronics'
-AND p.price BETWEEN 50 AND 500
-AND 'a' IN p.name;
+FROM Products
+WHERE category = 'Electronics'
+    AND price BETWEEN 50 AND 500
+    AND LOWER(name) LIKE '%a%';
+
+-- Get the top 5 most expensive products in the 'Electronics' category, skipping the first 2.
+
+SELECT *
+FROM Products
+WHERE category = 'Electronics'
+ORDER BY price DESC
+LIMIT 5
+OFFSET 2;
+
+-- Retrieve customers who have not placed any orders.
+
+SELECT c.customer_id, c.name
+FROM Customers c
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Orders o
+    WHERE o.customer_id = c.customer_id
+);
+
+-- Find the average total amount spent by each customer.
+
+SELECT o.customer_id, AVG(total_amount)
+FROM Orders o
+GROUP BY o.customer_id;
+
+-- Get the products that have a price less than the average price of all products.
+
+SELECT p.name, p.price
+FROM Products p
+WHERE p.price < (SELECT AVG(price) FROM Products);
+
+-- Calculate the total quantity of products ordered by each customer:
+
+SELECT o.customer_id, SUM(o.quantity)
+FROM Orders o
+GROUP BY o.customer_id;
+
+-- List all orders along with customer name and product name.
+
+SELECT  o.order_id,
+        c.name AS CustomerName, 
+        p.name AS ProductName, 
+        o.quantity, 
+        o.order_date, 
+        o.status, 
+        o.payment_method, 
+        o.total_amount
+FROM Orders o
+JOIN Customers c ON o.customer_id = c.customer_id
+JOIN Products p ON o.product_id = p.product_id
+ORDER BY o.order_id, p.name;
+
+-- Find products that have never been ordered.
+
+SELECT 
+    p.product_id,
+    p.name,
+    p.price,
+    p.category
+FROM Products p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Orders o
+    WHERE o.product_id = p.product_id
+);

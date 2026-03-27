@@ -18,6 +18,7 @@
                 <pre><code>USE e_commerce;</code></pre>
             </li>
         </ol>
+        <img src="screenshots/1.png" alt="Database Schema">
     </li>
     <li>
         Create following Tables:
@@ -40,6 +41,7 @@
     price DECIMAL(10, 2) NOT NULL,
     category VARCHAR(50)
 );</code></pre>
+                <img src="screenshots/2.png" alt="Products Table">
             </li>
         </ol>
     </li>
@@ -78,6 +80,7 @@ MODIFY product_id INT AUTO_INCREMENT PRIMARY KEY;</code></pre>
 MODIFY description TEXT;</code></pre>
             </li>
         </ol>
+        <img src="screenshots/3.png" alt="Modified Products Table">
     </li>
     <li>
         Create table Order:
@@ -94,6 +97,7 @@ MODIFY description TEXT;</code></pre>
     total_amount DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
 );</code></pre>
+        <img src="screenshots/4.png" alt="Orders Table">
     </li>
     <li>
         Modify Orders Table(using Alter keyword):
@@ -118,6 +122,7 @@ MODIFY payment_method ENUM('Credit', 'Debit', 'UPI', 'COD');</code></pre>
 ADD FOREIGN KEY (product_id) REFERENCES Products(product_id);</code></pre>
             </li>
         </ol>
+        <img src="screenshots/5.png" alt="Modified Orders Table">
     </li>
     <li>
         Insert 20 sample records in all the tables.
@@ -145,6 +150,7 @@ ADD FOREIGN KEY (product_id) REFERENCES Products(product_id);</code></pre>
 ('Riya Kapoor', 'riya.kapoor@example.com', '9876500018', 24),
 ('Dev Mishra', 'dev.mishra@example.com', '9876500019', 36),
 ('Pooja Saini', 'pooja.saini@example.com', '9876500020', 26);</code></pre>
+<img src="screenshots/6.png" alt="Customers Table Records">
             </li>
             <li>
                 Insert 20 records in Products table
@@ -169,6 +175,7 @@ ADD FOREIGN KEY (product_id) REFERENCES Products(product_id);</code></pre>
 ('Study Table', 'Engineered wood compact study table', 4499.00, 'Furniture'),
 ('Face Wash', 'Gentle daily face wash 150ml', 299.00, 'Personal Care'),
 ('Sunglasses', 'UV protected polarized sunglasses', 1199.00, 'Fashion');</code></pre>
+                <img src="screenshots/7.png" alt="Modified Products Table">
             </li>
             <li>
                 Insert 20 records in Orders table
@@ -193,6 +200,7 @@ ADD FOREIGN KEY (product_id) REFERENCES Products(product_id);</code></pre>
 (10, 6, 1, '2026-03-10', 'Success', 'Debit', 3499.00),
 (12, 3, 2, '2026-03-10', 'Pending', 'COD', 3198.00),
 (15, 7, 1, '2026-03-10', 'Success', 'UPI', 499.00);</code></pre>
+                <img src="screenshots/8.png" alt="Orders Table Records">
             </li>
         </ol>
     </li>
@@ -204,6 +212,7 @@ ADD FOREIGN KEY (product_id) REFERENCES Products(product_id);</code></pre>
 AS product_count
 FROM Products p
 GROUP BY p.category;</code></pre>
+                <img src="screenshots/9.png" alt="Product Count by Category">
             </li>
             <li>Retrieve all products that belong to the 'Electronics' category, have a price between $50 and $500, and whose name contains the letter 'a'.
             <pre><code>SELECT * 
@@ -211,6 +220,7 @@ FROM Products
 WHERE category = 'Electronics'
     AND price BETWEEN 50 AND 500
     AND LOWER(name) LIKE '%a%';</code></pre>
+                <img src="screenshots/10.png" alt="Filtered Electronics Products">
             </li>
             <li>Get the top 5 most expensive products in the 'Electronics' category, skipping the first 2.
             <pre><code>SELECT *
@@ -219,6 +229,7 @@ WHERE category = 'Electronics'
 ORDER BY price DESC
 LIMIT 5
 OFFSET 2;</code></pre>
+                <img src="screenshots/11.png" alt="Top 5 Expensive Electronics Products">
             </li>
             <li>Retrieve customers who have not placed any orders.
             <pre><code>SELECT c.customer_id, c.name
@@ -228,21 +239,25 @@ WHERE NOT EXISTS (
     FROM Orders o
     WHERE o.customer_id = c.customer_id
 );</code></pre>
+                <img src="screenshots/12.png" alt="Customers Without Orders">
             </li>
             <li>Find the average total amount spent by each customer.
             <pre><code>SELECT o.customer_id, AVG(total_amount)
 FROM Orders o
 GROUP BY o.customer_id;</code></pre>
+                    <img src="screenshots/13.png" alt="Average Total Amount Spent by Each Customer">
             </li>
             <li>Get the products that have a price less than the average price of all products.
             <pre><code>SELECT p.name, p.price
 FROM Products p
 WHERE p.price < (SELECT AVG(price) FROM Products);</code></pre>
+                <img src="screenshots/14.png" alt="Products Below Average Price">
             </li>
             <li>Calculate the total quantity of products ordered by each customer.
             <pre><code>SELECT o.customer_id, SUM(o.quantity)
 FROM Orders o
 GROUP BY o.customer_id;</code></pre>
+                <img src="screenshots/15.png" alt="Total Quantity Ordered by Each Customer">
             </li>
             <li>List all orders along with customer name and product name.
             <pre><code>SELECT  o.order_id,
@@ -257,6 +272,7 @@ FROM Orders o
 JOIN Customers c ON o.customer_id = c.customer_id
 JOIN Products p ON o.product_id = p.product_id
 ORDER BY o.order_id, p.name;</code></pre>
+                <img src="screenshots/16.png" alt="Orders with Customer and Product Names">
             </li>
             <li>Find products that have never been ordered.
             <pre><code>SELECT 
@@ -270,6 +286,7 @@ WHERE NOT EXISTS (
     FROM Orders o
     WHERE o.product_id = p.product_id
 );</code></pre>
+                <img src="screenshots/17.png" alt="Products Never Ordered">
             </li>
         </ol>
     </li>

@@ -21,6 +21,25 @@ WHERE total_amount > 500;
 
 -- c. Write a CRON job to generate daily sales reports at 11:55 PM
 
+SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS daily_sales_report;
+
+CREATE EVENT daily_sales_report
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(CURRENT_DATE, '23:55:00')
+DO
+WITH daily_report AS (
+    SELECT
+        CURDATE() AS report_date,
+        COUNT(*) AS total_orders,
+        COALESCE(SUM(total_amount), 0) AS total_sales
+    FROM Orders
+    WHERE DATE(order_date) = CURDATE()
+)
+SELECT *
+FROM daily_report;
+
 
 -- d. Write a transaction to insert a new customer and an order. If the order fails, roll back the customer creation.
 

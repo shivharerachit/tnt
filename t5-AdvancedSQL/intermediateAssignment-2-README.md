@@ -33,6 +33,7 @@ SELECT *
 FROM customer_spending 
 ORDER BY total_spent DESC
 LIMIT 3;</code></pre>
+<img src="screenshots/I2-a.png" >
 </li>
 
 <li>
@@ -51,6 +52,7 @@ LIMIT 3;</code></pre>
 	CAST(total_amount AS SIGNED) AS total_amount_int
 FROM Orders
 WHERE total_amount > 500;</code></pre>
+<img src="screenshots/I2-b.png" >
 </li>
 
 <li>
@@ -63,7 +65,25 @@ WHERE total_amount > 500;</code></pre>
 <li>Time-based automation</li>
 </ul>
 <p><strong>Cron Syntax:</strong></p>
-<pre><code>55 23 * * *</code></pre>
+<pre><code>SET GLOBAL event_scheduler = ON;
+
+DROP EVENT IF EXISTS daily_sales_report;
+
+CREATE EVENT daily_sales_report
+ON SCHEDULE EVERY 1 DAY
+STARTS TIMESTAMP(CURRENT_DATE, '23:55:00')
+DO
+WITH daily_report AS (
+    SELECT
+        CURDATE() AS report_date,
+        COUNT(*) AS total_orders,
+        COALESCE(SUM(total_amount), 0) AS total_sales
+    FROM Orders
+    WHERE DATE(order_date) = CURDATE()
+)
+SELECT *
+FROM daily_report;</code></pre>
+<img src="screenshots/I2-c.png" >
 <p>This schedule runs every day at 11:55 PM.</p>
 </li>
 
@@ -90,6 +110,7 @@ COMMIT;
 
 -- If the order INSERT fails, execute:
 -- ROLLBACK;</code></pre>
+<img src="screenshots/I2-d.png" >
 <p><strong>Note:</strong> In a real database session, the rollback must be executed before COMMIT if the second insert fails.</p>
 </li>
 
@@ -115,6 +136,7 @@ SELECT
 	RANK() OVER (ORDER BY total_spent DESC) AS spending_rank
 FROM customer_spending
 ORDER BY spending_rank, customer_id;</code></pre>
+<img src="screenshots/I2-e.png" >
 </li>
 </ol>
 

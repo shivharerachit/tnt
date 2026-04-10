@@ -1,3 +1,4 @@
+// Write a program to print the Fibonacci sequence up to a specified number.
 import java.util.Scanner;
 
 public class Fibonacci {

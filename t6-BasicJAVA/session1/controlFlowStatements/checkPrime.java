@@ -1,6 +1,6 @@
 // Write a program to check if a given number is prime using an if-else statement.
 import java.util.Scanner;
-public class checkPrime {
+public class CheckPrime {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.print("Enter a number: ");

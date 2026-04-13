@@ -17,6 +17,12 @@ public class UserRepository {
     private final Map<Long, User> userStore = new HashMap<>();
     private final AtomicLong sequence = new AtomicLong(0);
 
+    public UserRepository() {
+        save(new CreateUserRequest("Aman", "aman@example.com"));
+        save(new CreateUserRequest("Priya", "priya@example.com"));
+        save(new CreateUserRequest("Ram", "ram@example.com"));
+    }
+
     public List<User> findAll() {
         return new ArrayList<>(userStore.values());
     }

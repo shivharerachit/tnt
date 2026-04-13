@@ -13,6 +13,7 @@ import com.nqt.training.model.User;
 import com.nqt.training.request.CreateUserRequest;
 import com.nqt.training.service.UserService;
 
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -22,7 +23,7 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
-    
+
     @GetMapping
     public List<User> getUsers() {
         return userService.getAllUsers();

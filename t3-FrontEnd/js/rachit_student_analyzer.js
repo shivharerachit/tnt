@@ -38,7 +38,7 @@ const students = [
         marks: [
             { subject: "Math", score: 88 },
             { subject: "English", score: 90 },
-            { subject: "Science", score: 38 },  // ≤ 40 → should trigger Fail
+            { subject: "Science", score: 38 }, 
             { subject: "History", score: 80 },
             { subject: "Computer", score: 85 }
         ],
@@ -73,7 +73,7 @@ function getAverage(student) {
 
 function getFailedSubject(student) {
     let failedSubjects = [];
-    for (let i = 0; i < student.marks.lenth; i++) {
+    for (let i = 0; i < student.marks.length; i++) {
         if (student.marks[i].score <= 40) {
             failedSubjects.push(student.marks[i].subject);
         }

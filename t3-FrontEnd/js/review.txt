@@ -1,0 +1,1 @@
+Your getTotalMarks() helper is cleanly architected and your grade logic handles combined fail conditions well, but student.marks.lenth has a missing 'e' that silently breaks subject-fail detection for every student, and you even marked Riya's score with a comment saying it should trigger Fail, so always run the code and check the output before submitting.

@@ -1,0 +1,1 @@
+The CSS-only dropdown nav and your variable system show real skill, so audit your :root before submitting next time because --font-body is used but never defined, --color-border does not exist (it's --border), #skill is missing an 's', and font-style should be font-size, all four are one-word fixes.

@@ -19,6 +19,7 @@
     --font-one: 'Georgia', 'Times New Roman';
     --font-two: 'Trebuchet MS', 'Segoe UI';
     --font-heading: 'Georgia', 'Times New Roman';
+    --font-body: 'Trebuchet MS', 'Segoe UI', sans-serif;
     --round: 8px;
     --shadow: rgba(26, 39, 68, 0.10);
     --border: #dde2ec;
@@ -37,7 +38,7 @@ body {
 /* This is tag selector where I selected all the hr (horizontal rules) with some common color and reset the border and margin */
 hr {
     border: none;
-    border-top: 2px solid var(--color-border);
+    border-top: 2px solid var(--border);
     margin: 0;
 }
 
@@ -196,7 +197,7 @@ em {
 
 /* Skills section */
 
-#skill ul {
+#skills ul {
     list-style: none;
     padding-left: 0;
 }
@@ -222,7 +223,7 @@ em {
 
 #skills ul ul li {
     line-height: 2;
-    font-style: 0.95rem;
+    font-size: 0.95rem;
     padding: 4px 0;
     border-bottom: 1px dashed var(--border);
     color: var(--color-text);

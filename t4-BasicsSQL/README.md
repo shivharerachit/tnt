@@ -98,6 +98,7 @@ MODIFY description TEXT;</code></pre>
     FOREIGN KEY (customer_id) REFERENCES Customers(customer_id)
 );</code></pre>
         <img src="screenshots/4.png" alt="Orders Table">
+        <img src="screenshots/4a.png" alt="Update in Orders Table">
     </li>
     <li>
         Modify Orders Table(using Alter keyword):

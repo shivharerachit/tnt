@@ -1,0 +1,1 @@
+Your table uses both rowspan and colspan correctly and your comments explain the why behind every tag choice, but fix the typo in the contact section tag (sectio should be section) and wrap your table rows in thead and tbody.

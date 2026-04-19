@@ -1,10 +1,8 @@
 package com.spring.rest.service;
 
-import com.spring.rest.dto.UserDto;
 import com.spring.rest.dto.UserResponseDto;
 import com.spring.rest.entity.UserEntity;
 import com.spring.rest.repository.UserRepository;
-import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +19,7 @@ public class UserService {
     }
 
     public List<UserResponseDto> searchUsers(String name, Integer age, String role) {
-        List<UserResponseDto> users = userRepository.findAll();
+        List<UserEntity> users = userRepository.findAll();
 
         if (name == null && age == null && role == null) {
             return users.stream().map(this::toUserResponseDto).collect(Collectors.toList());

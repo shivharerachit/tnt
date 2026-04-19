@@ -3,5 +3,8 @@ package com.spring.rest.entity;
 public enum Role {
     ADMIN,
     USER,
-    MANAGER
+    MANAGER;
+
+//    public boolean equalsIgnoreCase(String role) {
+//    }
 }

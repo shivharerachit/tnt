@@ -1,11 +1,7 @@
 package com.spring.rest.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 
-@Getter
 public class ErrorResponse {
     private final LocalDateTime timestamp;
     private final int status;
@@ -15,5 +11,17 @@ public class ErrorResponse {
         this.timestamp = LocalDateTime.now();
         this.status = status;
         this.error = error;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public String getError() {
+        return error;
     }
 }

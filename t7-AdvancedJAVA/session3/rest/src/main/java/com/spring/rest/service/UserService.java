@@ -2,6 +2,7 @@ package com.spring.rest.service;
 
 import com.spring.rest.dto.UserResponseDto;
 import com.spring.rest.entity.UserEntity;
+import com.spring.rest.exception.ResourceNotFoundException;
 import com.spring.rest.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +32,7 @@ public class UserService {
                         .equals(name.toLowerCase(Locale.ROOT)))
                 .filter(user -> age == null || user.getAge().equals(age))
                 .filter(user -> role == null
-                        || user.getRole().equalsIgnoreCase(role))
+                        || user.getRole().name().equalsIgnoreCase(role))
                 .map(this::toUserResponseDto)
                 .collect(Collectors.toList());
     }
@@ -40,7 +41,7 @@ public class UserService {
         return new UserResponseDto(user.getId(), user.getName(), user.getAge(), user.getRole().name());
     }
 
-    private String deleteUser(Long id, Boolean confirm) {
+    public String deleteUser(Long id, Boolean confirm) {
         if (confirm == null || !confirm) {
             return "Confirmation required";
         }

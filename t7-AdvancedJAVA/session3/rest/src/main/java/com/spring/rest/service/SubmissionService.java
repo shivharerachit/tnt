@@ -2,6 +2,7 @@ package com.spring.rest.service;
 
 import com.spring.rest.dto.SubmitRequest;
 
+import com.spring.rest.exception.BadRequestException;
 import org.springframework.stereotype.Service;
 
 @Service

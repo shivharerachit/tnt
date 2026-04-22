@@ -3,17 +3,15 @@ package com.project.ReimbursementPortal.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
 public class User {
 
     @Id
@@ -24,7 +22,7 @@ public class User {
     private String name;
 
     @Email
-    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@company\\.com$")
+    @Pattern(regexp = "^[A-Za-z0-9._%+-]+@company\\.com$", message = "Email must be a valid company email")
     @Column(nullable = false, unique = true)
     private String email;
 
@@ -32,15 +30,14 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
+    @Column(nullable = false)
     private UserRole role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "manager_id", foreignKey = @ForeignKey(name = "fk_user_manager"))
-    private User manager;
+    @Column(name = "manager_id")
+    private Long managerId;
 
-    @OneToMany(mappedBy = "manager")
-    private List<User> reportees;
+    @Column(name = "reportees_ids")
+    private List<Long> reporteesIds;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -10,5 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "app")
 public class AppProperties {
+    /**
+     * The allowed email domain for user registration, configured in application properties.
+     */
     private String allowedEmailDomain;
 }

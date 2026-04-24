@@ -2,7 +2,9 @@ package com.rest.todo.controller;
 
 import com.rest.todo.dto.TodoRequestDto;
 import com.rest.todo.dto.TodoResponseDto;
+import com.rest.todo.entity.TodoStatus;
 import com.rest.todo.service.TodoService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +24,7 @@ public class TodoController {
     //● Set createdAt automatically (not from user)
     //● Default status = PENDING if not provided
     @PostMapping
-    public TodoResponseDto createTodo(@RequestBody TodoRequestDto todoRequestDto) {
+    public TodoResponseDto createTodo(@Valid @RequestBody TodoRequestDto todoRequestDto) {
         return todoService.createTodo(todoRequestDto);
     }
 
@@ -50,18 +52,25 @@ public class TodoController {
     //○ description
     //○ status
     @PutMapping("/{id}")
-    public TodoResponseDto updateTodo(@PathVariable Long id, @RequestBody TodoRequestDto todoRequestDto) {
+    public TodoResponseDto updateTodo(@PathVariable Long id, @Valid @RequestBody TodoRequestDto todoRequestDto) {
         return todoService.updateTodo(id, todoRequestDto);
     }
 
     //5. Delete TODO
     //DELETE /todos/{id}
     //● Delete task by ID
+    @DeleteMapping("/{id}")
+    public String deleteTodo(@PathVariable Long id) {
+        todoService.deleteTodo(id);
+        return "Task Deleted Successfully";
+    }
+
     //Allowed transitions:
     //○ PENDING → COMPLETED
     //○ COMPLETED → PENDING
-    @DeleteMapping("/{id}")
-    public void deleteTodo(@PathVariable Long id) {
-        todoService.deleteTodo(id);
+    @PatchMapping("/{id}/status")
+    public String updateTodoStatus(@PathVariable Long id, @RequestParam TodoStatus newStatus) {
+        todoService.updateTodoStatus(id, newStatus);
+        return "Task status updated to " + newStatus;
     }
 }

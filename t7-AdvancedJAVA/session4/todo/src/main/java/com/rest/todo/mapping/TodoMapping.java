@@ -5,12 +5,13 @@ import com.rest.todo.entity.Todo;
 
 public class TodoMapping {
     public static TodoResponseDto convertToDTO(Todo todo) {
-        TodoResponseDto dto = new TodoResponseDto();
-        dto.setId(todo.getId());
-        dto.setTitle(todo.getTitle());
-        dto.setDescription(todo.getDescription());
-        dto.setStatus(todo.getStatus());
-        dto.setCreatedAt(todo.getCreatedAt());
+        TodoResponseDto dto = new TodoResponseDto(
+            todo.getId(),
+            todo.getTitle(),
+            todo.getDescription(),
+            todo.getStatus(),
+            todo.getCreatedAt()
+        );
         return dto;
     }
 }

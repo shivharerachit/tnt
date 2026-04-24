@@ -3,6 +3,7 @@ package com.rest.todo.service;
 import com.rest.todo.dto.TodoRequestDto;
 import com.rest.todo.dto.TodoResponseDto;
 import com.rest.todo.entity.Todo;
+import com.rest.todo.entity.TodoStatus;
 import com.rest.todo.mapping.TodoMapping;
 import com.rest.todo.repository.TodoRepository;
 import org.springframework.stereotype.Service;
@@ -59,5 +60,13 @@ public class TodoService {
         todoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id));
         todoRepository.deleteById(id);
+    }
+
+    public void updateTodoStatus(Long id, TodoStatus newStatus) {
+        todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id))
+                .setStatus(newStatus);
+        todoRepository.save(todoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Todo not found with id: " + id)));
     }
 }

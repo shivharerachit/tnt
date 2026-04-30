@@ -1,27 +1,31 @@
 package com.project.ReimbursementPortal.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 
 @Getter
 @Setter
-public class UserResponseDto {
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthResponseDto {
 
     /**
-     * User identifier.
-     * This is a unique value that can be used to reference the user in other API calls and for authorization purposes.
+     * User ID of the authenticated user. This is a unique identifier that can be used for authorization and other operations.
      */
-    private Long id;
+    private Long userId;
 
     /**
-     * Name of the user.
+     * Name of the authenticated user.
      * This is included in the response for convenience,
      * allowing the client to display the user's name without needing an additional API call.
      */
     private String name;
 
     /**
-     * Email of the user.
+     * Email of the authenticated user.
      * This is included in the response for convenience,
      * allowing the client to display the user's email without needing an additional API call.
      * It can also be used for client-side logic that may require the user's email.
@@ -29,12 +33,7 @@ public class UserResponseDto {
     private String email;
 
     /**
-     * Role of the user (e.g., ADMIN, EMPLOYEE).
+     * Role of the authenticated user (e.g., ADMIN, EMPLOYEE).
      */
     private String role;
-
-    /**
-     * Manager ID of the user. This field is relevant for employees, indicating who their manager is.
-     */
-    private Long managerId;
 }

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reviews</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="top">
+      <div>
+        <h1 class="m0">Reviews</h1>
+        <p id="sessionLine" class="small m0"></p>
+      </div>
+      <div class="row">
+        <nav class="nav">
+          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
+          <a id="navUsers" data-page="users" href="users.html">Users</a>
+          <a data-page="claims" href="claims.html">Claims</a>
+          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
+          <a data-page="tracking" href="tracking.html">Tracking</a>
+        </nav>
+        <button id="logoutBtn" class="btn">Logout</button>
+      </div>
+    </header>
+
+    <p id="msg" class="msg"></p>
+
+    <section class="grid">
+      <article class="card">
+        <h3>Pending claims</h3>
+        <div id="pendingList"></div>
+      </article>
+      <article class="card">
+        <h3>Take action</h3>
+        <form id="reviewForm">
+          <label>Claim<select id="claimId" required></select></label>
+          <label>Decision
+            <select id="decision" required>
+              <option value="APPROVED">Approve</option>
+              <option value="REJECTED">Reject</option>
+            </select>
+          </label>
+          <label>Comment<textarea id="comment" rows="4" required></textarea></label>
+          <button class="btn btn-primary" type="submit">Submit review</button>
+        </form>
+      </article>
+    </section>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/reviews.js"></script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="top">
+      <div>
+        <h1 class="m0">Users</h1>
+        <p id="sessionLine" class="small m0"></p>
+      </div>
+      <div class="row">
+        <nav class="nav">
+          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
+          <a id="navUsers" data-page="users" href="users.html">Users</a>
+          <a data-page="claims" href="claims.html">Claims</a>
+          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
+          <a data-page="tracking" href="tracking.html">Tracking</a>
+        </nav>
+        <button id="logoutBtn" class="btn">Logout</button>
+      </div>
+    </header>
+
+    <p id="msg" class="msg"></p>
+
+    <section class="grid-3">
+      <article class="card">
+        <h3>Create user</h3>
+        <form id="createForm">
+          <label>Name<input id="name" type="text" required /></label>
+          <label>Email<input id="email" type="email" required /></label>
+          <label>Password<input id="password" type="password" minlength="6" required /></label>
+          <label>Role
+            <select id="role" required>
+              <option value="">Select role</option>
+              <option value="ADMIN">Admin</option>
+              <option value="MANAGER">Manager</option>
+              <option value="EMPLOYEE">Employee</option>
+            </select>
+          </label>
+          <label>Manager<select id="managerId"><option value="">No manager</option></select></label>
+          <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h3>Assign manager</h3>
+        <form id="assignForm">
+          <label>Employee<select id="employeeId" required></select></label>
+          <label>Manager<select id="assignManagerId" required></select></label>
+          <button class="btn btn-primary" type="submit">Assign</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h3>Team under manager</h3>
+        <form id="teamForm">
+          <label>Manager<select id="teamManagerId" required></select></label>
+          <button class="btn" type="submit">Load team</button>
+        </form>
+        <ul id="teamList"></ul>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <label style="min-width:220px">Filter by role
+          <select id="filterRole">
+            <option value="ALL">All users</option>
+            <option value="ADMIN">Admin</option>
+            <option value="MANAGER">Manager</option>
+            <option value="EMPLOYEE">Employee</option>
+          </select>
+        </label>
+      </div>
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Manager</th><th>Action</th></tr></thead>
+        <tbody id="usersBody"></tbody>
+      </table>
+    </section>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/users.js"></script>
+</body>
+</html>

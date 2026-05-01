@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <header class="top">
+      <div>
+        <h1 class="m0">Dashboard</h1>
+        <p id="sessionLine" class="small m0"></p>
+      </div>
+      <div class="row">
+        <nav class="nav">
+          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
+          <a id="navUsers" data-page="users" href="users.html">Users</a>
+          <a data-page="claims" href="claims.html">Claims</a>
+          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
+          <a data-page="tracking" href="tracking.html">Tracking</a>
+        </nav>
+        <button id="logoutBtn" class="btn">Logout</button>
+      </div>
+    </header>
+
+    <p id="msg" class="msg"></p>
+
+    <section class="grid-3">
+      <article class="card"><h3 class="m0">Users</h3><p id="usersCount" class="small">0</p></article>
+      <article class="card"><h3 class="m0">Claims</h3><p id="claimsCount" class="small">0</p></article>
+      <article class="card"><h3 class="m0">Pending</h3><p id="pendingCount" class="small">0</p></article>
+    </section>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

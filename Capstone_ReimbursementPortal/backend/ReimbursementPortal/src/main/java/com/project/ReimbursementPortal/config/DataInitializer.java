@@ -4,6 +4,7 @@ import com.project.ReimbursementPortal.enums.UserRole;
 import com.project.ReimbursementPortal.entity.User;
 import com.project.ReimbursementPortal.repository.UserRepository;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -12,19 +13,36 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     /**
-     * User repository for database operations.
+     * for user data access.
      */
     private final UserRepository userRepository;
 
     /**
-     * Password encoder for hashing default admin password.
+     * for hashing the default admin password.
      */
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Creates a data initializer.
-     * @param userRepository user repository
-     * @param passwordEncoder password encoder
+     * for seeding the default admin user.
+     */
+    @Value("${app.default-admin.name}")
+    private String defaultAdminName;
+
+    /**
+     * for seeding the default admin user.
+     */
+    @Value("${app.default-admin.email}")
+    private String defaultAdminEmail;
+
+    /**
+     * for seeding the default admin user.
+     */
+    @Value("${app.default-admin.password}")
+    private String defaultAdminPassword;
+
+    /**
+     * @param userRepository repo
+     * @param passwordEncoder bcrypt bean
      */
     public DataInitializer(final UserRepository userRepository, final PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -32,19 +50,19 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * Initializes default data on application startup.
-     * @param args incoming main method arguments
+     * First boot with empty DB → seed one ADMIN so login works out of the box.
+     *
+     * @param args unused
      */
     @Override
     public void run(final String... args) {
 
-        // Create default admin if DB empty
         if (userRepository.count() == 0) {
 
-            User admin =  new User();
-            admin.setName("Admin");
-            admin.setEmail("admin@company.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            User admin = new User();
+            admin.setName(defaultAdminName);
+            admin.setEmail(defaultAdminEmail);
+            admin.setPassword(passwordEncoder.encode(defaultAdminPassword));
             admin.setRole(UserRole.ADMIN);
 
             userRepository.save(admin);

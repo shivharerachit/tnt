@@ -7,21 +7,20 @@ import org.springframework.stereotype.Component;
 public class EmailValidator {
 
     /**
-     * Allowed email domain for user registration. Configured via application properties.
+     * The allowed email domain for user signups.
      */
     private final String allowedDomain;
 
     /**
-     * Constructor that initializes the allowed email domain from application properties.
-     * @param domain the allowed email domain (e.g., "@company.com")
+     * @param domain from {@code app.allowed-email-domain} config
      */
     public EmailValidator(final @Value("${app.allowed-email-domain}") String domain) {
         this.allowedDomain = domain;
     }
 
     /**
-     * Validates that the provided email address ends with the allowed domain.
-     * @param email the email address to validate
+     * @param email signup email
+     * @throws RuntimeException missing config or suffix mismatch
      */
     public void validate(final String email) {
         if (allowedDomain == null || allowedDomain.isEmpty()) {

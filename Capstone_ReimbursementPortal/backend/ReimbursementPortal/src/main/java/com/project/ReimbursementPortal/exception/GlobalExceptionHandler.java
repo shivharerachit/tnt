@@ -8,23 +8,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-/**
- * Global exception handler for centralized error handling and consistent HTTP status codes.
- * Maps domain-specific exceptions to appropriate HTTP status codes:
- * - 400 Bad Request: Invalid client input or request format
- * - 401 Unauthorized: Missing or invalid authentication
- * - 403 Forbidden: Authenticated but lacks authorization
- * - 404 Not Found: Resource doesn't exist
- * - 409 Conflict: Duplicate resource or constraint violation
- * - 500 Internal Server Error: Unexpected server errors
- */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
-     * Handles claim not found (404 Not Found).
-     * @param ex the exception thrown when a claim is not found
-     * @return a response entity with a standard response body and 404 status
+     * @param ex not found
+     * @return 404 + message
      */
     @ExceptionHandler(ClaimNotFoundException.class)
     public ResponseEntity<StandardResponseDto<?>> handleClaimNotFound(final ClaimNotFoundException ex) {
@@ -33,9 +22,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles user not found (404 Not Found).
-     * @param ex the exception thrown when a user is not found
-     * @return a response entity with a standard response body and 404 status
+     * @param ex not found
+     * @return 404 + message
      */
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<StandardResponseDto<?>> handleUserNotFound(final UserNotFoundException ex) {
@@ -44,9 +32,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles forbidden access (403 Forbidden) - user is authenticated but not authorized.
-     * @param ex the exception thrown when access is forbidden
-     * @return a response entity with a standard response body and 403 status
+     * @param ex wrong role / rule
+     * @return 403
      */
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<StandardResponseDto<?>> handleForbidden(final ForbiddenException ex) {
@@ -55,9 +42,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles unauthorized access (401 Unauthorized) - missing or invalid authentication.
-     * @param ex the exception thrown when authentication fails
-     * @return a response entity with a standard response body and 401 status
+     * @param ex bad login etc.
+     * @return 401
      */
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<StandardResponseDto<?>> handleUnauthorized(final UnauthorizedException ex) {
@@ -66,9 +52,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles bad request (400 Bad Request) - invalid client input.
-     * @param ex the exception thrown when a bad request is made
-     * @return a response entity with a standard response body and 400 status
+     * @param ex bad input / business rule from our code
+     * @return 400
      */
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<StandardResponseDto<?>> handleBadRequest(final BadRequestException ex) {
@@ -77,9 +62,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles email already exists (409 Conflict).
-     * @param ex the exception thrown when trying to create a user with an email that already exists
-     * @return a response entity with a standard response body and 409 status
+     * @param ex duplicate email signup
+     * @return 409
      */
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<StandardResponseDto<?>> handleEmailAlreadyExists(final EmailAlreadyExistsException ex) {
@@ -88,9 +72,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles data integrity violations (409 Conflict).
-     * @param ex the exception thrown when a database constraint is violated (e.g., unique constraint)
-     * @return a response entity with a standard response body and 409 status, including the
+     * Postgres unique constraint etc. bubbling up through Spring.
+     *
+     * @param ex constraint failure
+     * @return 409 + short message prefix
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<StandardResponseDto<?>> handleDataIntegrityViolation(final DataIntegrityViolationException ex) {
@@ -104,9 +89,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles validation errors (400 Bad Request).
-     * @param ex the exception thrown when method arguments fail validation
-     * @return a response entity with a standard response body and 400 status
+     * Bean validation on DTOs (@NotNull etc.).
+     *
+     * @param ex field errors
+     * @return one 400 string joining all fields
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<StandardResponseDto<?>> handleValidationExceptions(final MethodArgumentNotValidException ex) {
@@ -122,9 +108,10 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Fallback handler for unexpected exceptions (500 Internal Server Error).
-     * @param ex the exception thrown when an unexpected error occurs
-     * @return a response entity with a standard response body and 500 status
+     * Last resort — anything else.
+     *
+     * @param ex whatever bubbled up
+     * @return 500
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<StandardResponseDto<?>> handleException(final Exception ex) {

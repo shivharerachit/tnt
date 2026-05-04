@@ -10,23 +10,20 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
-     * Finds a user by their email address.
-     * @param email user email
-     * @return optional user
+     * @param email unique login
+     * @return Optional containing the User with the specified email
      */
     Optional<User> findByEmail(String email);
 
     /**
-     * Finds users by their role (e.g., EMPLOYEE, MANAGER, ADMIN).
-     * @param role user role
-     * @return list of users with the specified role
+     * @param role ADMIN/MANAGER/EMPLOYEE bucket
+     * @return all users with the specified role
      */
     List<User> findByRole(UserRole role);
 
     /**
-     * Finds users who report to a specific manager.
-     * @param managerId manager id
-     * @return list of users who report to the specified manager
+     * @param managerId parent user PK for org chart lookups
+     * @return all users with the specified managerId
      */
     List<User> findByManagerId(Long managerId);
 }

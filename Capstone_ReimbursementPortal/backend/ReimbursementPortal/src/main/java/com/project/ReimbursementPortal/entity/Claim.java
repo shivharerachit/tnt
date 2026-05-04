@@ -47,6 +47,11 @@ public class Claim {
     private LocalDate date;
 
     /**
+     * The title of the claim, providing a brief summary of the expense.
+     */
+    private String title;
+
+    /**
      * A description of the claim, providing details about the expense being claimed.
      */
     private String description;

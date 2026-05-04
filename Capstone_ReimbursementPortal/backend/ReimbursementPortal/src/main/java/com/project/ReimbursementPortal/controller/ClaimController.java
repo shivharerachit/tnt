@@ -3,20 +3,24 @@ package com.project.ReimbursementPortal.controller;
 import com.project.ReimbursementPortal.dto.ClaimRequestDto;
 import com.project.ReimbursementPortal.dto.ClaimResponseDto;
 import com.project.ReimbursementPortal.dto.StandardResponseDto;
+import com.project.ReimbursementPortal.enums.ClaimStatus;
 import com.project.ReimbursementPortal.exception.BadRequestException;
 import com.project.ReimbursementPortal.service.ClaimService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -24,24 +28,24 @@ import java.util.List;
 @RequestMapping("/claims")
 public class ClaimController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClaimController.class);
+
     /**
-     * Claim service for handling claim-related business logic. Injected via constructor.
+     * Service for handling claim-related business logic.
      */
     private final ClaimService claimService;
 
     /**
-     * Creates a claim controller with the given claim service.
-     * @param claimService the claim service to use for handling claim operations
+     * @param claimService service
      */
     public ClaimController(final ClaimService claimService) {
         this.claimService = claimService;
     }
 
     /**
-     * Extracts and validates the X-USER-ID header.
-     * @param userIdHeader the X-USER-ID header value
-     * @return parsed user ID
-     * @throws BadRequestException if header is invalid
+     * @param userIdHeader X-USER-ID
+     * @return user id
+     * @throws BadRequestException if not numeric
      */
     private Long getUserId(final String userIdHeader) {
         try {
@@ -51,12 +55,27 @@ public class ClaimController {
         }
     }
 
+    /**
+     * Optional status filter (query name {@code claimStatus} so it does not collide with {@code sort}).
+     *
+     * @param raw query value or blank
+     * @return parsed status or null
+     */
+    private ClaimStatus parseClaimStatusFilter(final String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return ClaimStatus.valueOf(raw.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid claimStatus. Use SUBMITTED, APPROVED, or REJECTED.");
+        }
+    }
 
     /**
-     * Handles claim submission requests. Validates the request body and delegates claim creation to the service layer.
-     * @param req the claim request containing claim details
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user submitting the claim
-     * @return a standard response containing the created claim details if successful
+     * @param req body
+     * @param userIdHeader X-USER-ID
+     * @return created claim
      */
     @PostMapping
     public StandardResponseDto<ClaimResponseDto> submitClaim(
@@ -65,21 +84,26 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
+        LOGGER.info("POST /claims submit callerUserId={}", userId);
+
         ClaimResponseDto res = claimService.submitClaim(req, userId);
+
+        LOGGER.info("POST /claims success callerUserId={} claimId={}", userId, res.getId());
 
         return new StandardResponseDto<>(true, "Claim submitted successfully", res);
     }
 
     /**
-     * Handles requests to fetch claims submitted by the current user. Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user whose claims are being fetched
-     * @return a standard response containing a list of claims submitted by the user if successful
+     * @param userIdHeader X-USER-ID
+     * @return employee's claims
      */
-    @GetMapping("/my")
+    @GetMapping("/user-claims")
     public StandardResponseDto<List<ClaimResponseDto>> getMyClaims(
             final @RequestHeader("X-USER-ID") String userIdHeader) {
 
         Long userId = getUserId(userIdHeader);
+
+        LOGGER.info("GET /claims/user-claims callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -89,36 +113,45 @@ public class ClaimController {
     }
 
     /**
-     * Handles requests to fetch claims submitted by the current user in a paginated format.
-     * Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user whose claims are being fetched
-     * @param pageable the pagination information (page number, size, sorting) for fetching claims
-     * @return a standard response containing a paginated list of claims submitted by the user if successful
+     * @param userIdHeader X-USER-ID
+     * @param pageable paging
+     * @param claimStatusFilter optional SUBMITTED / APPROVED / REJECTED
+     * @return page of my claims
      */
     @GetMapping("/my/paginated")
     public StandardResponseDto<Page<ClaimResponseDto>> getMyClaimsPaginated(
             final @RequestHeader("X-USER-ID") String userIdHeader,
-            final Pageable pageable) {
+            final Pageable pageable,
+            final @RequestParam(value = "claimStatus", required = false) String claimStatusFilter) {
 
         Long userId = getUserId(userIdHeader);
+        ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
+
+        LOGGER.info(
+                "GET /claims/my/paginated callerUserId={} claimStatusFilter={} page={} size={}",
+                userId,
+                status,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
 
         return new StandardResponseDto<>(
                 true,
                 "My claims fetched (paginated)",
-                claimService.getMyClaimsPaginated(userId, pageable)
+                claimService.getMyClaimsPaginated(userId, pageable, status)
         );
     }
 
     /**
-     * Handles requests to fetch claims assigned to the current user for review. Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user whose assigned claims are being fetched
-     * @return a standard response containing a list of claims assigned to the user for review if successful
+     * @param userIdHeader X-USER-ID
+     * @return claims I should review
      */
     @GetMapping("/reviewer")
     public StandardResponseDto<List<ClaimResponseDto>> getClaimsForReviewer(
             final @RequestHeader("X-USER-ID") String userIdHeader) {
 
         Long userId = getUserId(userIdHeader);
+
+        LOGGER.info("GET /claims/reviewer callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -128,32 +161,39 @@ public class ClaimController {
     }
 
     /**
-     * Handles requests to fetch claims assigned to the current user for review in a paginated format.
-     * Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user whose assigned claims are being fetched
-     * @param pageable the pagination information (page number, size, sorting) for fetching claims
-     * @return a standard response containing a paginated list of claims assigned to the user for review if successful
+     * @param userIdHeader X-USER-ID
+     * @param pageable paging
+     * @param claimStatusFilter optional status
+     * @return page for reviewer queue
      */
     @GetMapping("/reviewer/paginated")
     public StandardResponseDto<Page<ClaimResponseDto>> getClaimsForReviewerPaginated(
             final @RequestHeader("X-USER-ID") String userIdHeader,
-            final Pageable pageable) {
+            final Pageable pageable,
+            final @RequestParam(value = "claimStatus", required = false) String claimStatusFilter) {
 
         Long userId = getUserId(userIdHeader);
+        ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
+
+        LOGGER.info(
+                "GET /claims/reviewer/paginated callerUserId={} claimStatusFilter={} page={} size={}",
+                userId,
+                status,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
 
         return new StandardResponseDto<>(
                 true,
                 "Reviewer claims fetched (paginated)",
-                claimService.getClaimsForReviewerPaginated(userId, pageable)
+                claimService.getClaimsForReviewerPaginated(userId, pageable, status)
         );
     }
 
     /**
-     * Handles requests to approve a claim. Validates the claim ID and delegates approval logic to the service layer.
-     * @param claimId the ID of the claim to approve
-     * @param comments optional comments from the reviewer when approving the claim
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user approving the claim
-     * @return a standard response containing the updated claim details if approval is successful
+     * @param claimId claim id
+     * @param comments optional reviewer note
+     * @param userIdHeader X-USER-ID (reviewer)
+     * @return updated claim
      */
     @PutMapping("/{claimId}/approve")
     public StandardResponseDto<ClaimResponseDto> approveClaim(
@@ -165,15 +205,16 @@ public class ClaimController {
 
         ClaimResponseDto res = claimService.approveClaim(claimId, userId, comments);
 
+        LOGGER.info("PUT /claims/{}/approve success reviewerUserId={}", claimId, userId);
+
         return new StandardResponseDto<>(true, "Claim approved", res);
     }
 
     /**
-     * Handles requests to reject a claim. Validates the claim ID and delegates rejection logic to the service layer.
-     * @param claimId the ID of the claim to reject
-     * @param comments optional comments from the reviewer when rejecting the claim
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user rejecting the claim
-     * @return a standard response containing the updated claim details if rejection is successful
+     * @param claimId claim id
+     * @param comments optional reviewer note
+     * @param userIdHeader X-USER-ID (reviewer)
+     * @return updated claim
      */
     @PutMapping("/{claimId}/reject")
     public StandardResponseDto<ClaimResponseDto> rejectClaim(
@@ -183,18 +224,20 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
+        LOGGER.info("PUT /claims/{}/reject reviewerUserId={}", claimId, userId);
+
         ClaimResponseDto res = claimService.rejectClaim(claimId, userId, comments);
+
+        LOGGER.info("PUT /claims/{}/reject success reviewerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(true, "Claim rejected", res);
     }
 
     /**
-     * Handles requests to edit and resubmit a claim. Validates the claim ID and request body,
-     * then delegates editing and resubmission logic to the service layer.
-     * @param claimId the ID of the claim to edit and resubmit
-     * @param req the claim request containing updated claim details
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user editing and resubmitting the claim
-     * @return a standard response containing the updated claim details if resubmission is successful
+     * @param claimId claim id
+     * @param req updates
+     * @param userIdHeader X-USER-ID
+     * @return resubmitted claim
      */
     @PutMapping("/{claimId}")
     public StandardResponseDto<ClaimResponseDto> editAndResubmitClaim(
@@ -204,16 +247,19 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
+        LOGGER.info("PUT /claims/{} resubmit callerUserId={}", claimId, userId);
+
         ClaimResponseDto res = claimService.editAndResubmitClaim(claimId, req, userId);
+
+        LOGGER.info("PUT /claims/{} resubmit success callerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(true, "Claim resubmitted successfully", res);
     }
 
     /**
-     * Handles requests to fetch a claim by its ID. Validates the claim ID and delegates fetching logic to the service layer.
-     * @param claimId the ID of the claim to fetch
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user fetching the claim
-     * @return a standard response containing the claim details if found and accessible by the user
+     * @param claimId claim id
+     * @param userIdHeader X-USER-ID
+     * @return claim if caller may see it
      */
     @GetMapping("/{claimId}")
     public StandardResponseDto<ClaimResponseDto> getClaimById(
@@ -221,6 +267,8 @@ public class ClaimController {
             final @RequestHeader("X-USER-ID") String userIdHeader) {
 
         Long userId = getUserId(userIdHeader);
+
+        LOGGER.info("GET /claims/{} callerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -230,15 +278,16 @@ public class ClaimController {
     }
 
     /**
-     * Handles requests to fetch all claims in the system. Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user fetching all claims (used for authorization)
-     * @return a standard response containing a list of all claims in the system if the user is authorized to view them
+     * @param userIdHeader X-USER-ID (ADMIN)
+     * @return every claim
      */
     @GetMapping("/all")
     public StandardResponseDto<List<ClaimResponseDto>> getAllClaims(
             final @RequestHeader("X-USER-ID") String userIdHeader) {
 
         Long userId = getUserId(userIdHeader);
+
+        LOGGER.info("GET /claims/all callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -248,22 +297,56 @@ public class ClaimController {
     }
 
     /**
-     * Handles requests to fetch all claims in the system in a paginated format. Delegates fetching logic to the service layer.
-     * @param userIdHeader the X-USER-ID header value representing the ID of the user fetching all claims (used for authorization)
-     * @param pageable the pagination information (page number, size, sorting) for fetching claims
-     * @return a standard response containing a paginated list of all claims in the system if the user is authorized to view them
+     * @param userIdHeader X-USER-ID (ADMIN)
+     * @param pageable paging
+     * @param claimStatusFilter optional status
+     * @return full list page
      */
     @GetMapping("/all/paginated")
     public StandardResponseDto<Page<ClaimResponseDto>> getAllClaimsPaginated(
             final @RequestHeader("X-USER-ID") String userIdHeader,
-            final Pageable pageable) {
+            final Pageable pageable,
+            final @RequestParam(value = "claimStatus", required = false) String claimStatusFilter) {
 
         Long userId = getUserId(userIdHeader);
+        ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
+
+        LOGGER.info(
+                "GET /claims/all/paginated callerUserId={} claimStatusFilter={} page={} size={}",
+                userId,
+                status,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
 
         return new StandardResponseDto<>(
                 true,
                 "All claims fetched (paginated)",
-                claimService.getAllClaimsPaginated(userId, pageable)
+                claimService.getAllClaimsPaginated(userId, pageable, status)
+        );
+    }
+
+    /**
+     * @param claimId claim id
+     * @param userIdHeader X-USER-ID (ADMIN)
+     * @return empty envelope on success
+     */
+    @DeleteMapping("/{claimId}")
+    public StandardResponseDto<Void> deleteClaim(
+            final @PathVariable Long claimId,
+            final @RequestHeader("X-USER-ID") String userIdHeader) {
+
+        Long userId = getUserId(userIdHeader);
+
+        LOGGER.info("DELETE /claims/{} callerUserId={}", claimId, userId);
+
+        claimService.deleteClaim(claimId, userId);
+
+        LOGGER.info("DELETE /claims/{} success callerUserId={}", claimId, userId);
+
+        return new StandardResponseDto<>(
+                true,
+                "Claim deleted successfully",
+                null
         );
     }
 }

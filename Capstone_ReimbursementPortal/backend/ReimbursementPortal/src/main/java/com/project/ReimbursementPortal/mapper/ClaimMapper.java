@@ -6,31 +6,33 @@ import com.project.ReimbursementPortal.entity.Claim;
 
 public final class ClaimMapper {
 
+    /** static helpers only. */
     private ClaimMapper() {
     }
 
     /**
-     * Maps {@link ClaimRequestDto} to {@link Claim} entity.
-     * @param req the claim request DTO
-     * @return the claim entity
+     * @param req inbound fields (IDs/status still set elsewhere)
+     * @return Hibernate-managed instance before save()
      */
     public static Claim toEntity(final ClaimRequestDto req) {
         Claim claim = new Claim();
         claim.setAmount(req.getAmount());
+        claim.setTitle(req.getTitle());
         claim.setDescription(req.getDescription());
         claim.setEmployeeId(req.getEmployeeId());
         return claim;
     }
 
     /**
-     * Maps {@link Claim} entity to {@link ClaimResponseDto}.
-     * @param claim the claim entity
-     * @return the claim response DTO
+     * @param claim attached row
+     * @return wire-friendly JSON dto (amount/dates as primitives / strings downstream)
      */
     public static ClaimResponseDto toDTO(final Claim claim) {
         ClaimResponseDto res = new ClaimResponseDto();
         res.setId(claim.getId());
         res.setAmount(claim.getAmount());
+        res.setTitle(claim.getTitle());
+        res.setDescription(claim.getDescription());
         res.setDate(claim.getDate());
         res.setStatus(claim.getStatus().name());
         res.setEmployeeId(claim.getEmployeeId());

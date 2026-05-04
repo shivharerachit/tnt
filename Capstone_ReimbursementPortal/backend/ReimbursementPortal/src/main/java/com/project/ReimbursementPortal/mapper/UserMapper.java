@@ -7,17 +7,14 @@ import com.project.ReimbursementPortal.enums.UserRole;
 
 public final class UserMapper {
 
-    /**
-     * Private constructor to prevent instantiation of utility class.
-     */
+    /** static helpers only. */
     private UserMapper() {
-        throw new UnsupportedOperationException("Utility class cannot be instantiated");
+        throw new UnsupportedOperationException("no instances");
     }
 
     /**
-     * Converts a user request DTO to a user entity.
-     * @param req user request DTO
-     * @return user entity
+     * @param req still contains plaintext pwd — hash before persist in service layer
+     * @return detached entity-ish object
      */
     public static User toEntity(final UserRequestDto req) {
         User user =  new User();
@@ -30,9 +27,8 @@ public final class UserMapper {
     }
 
     /**
-     * Converts a user entity to a user response DTO.
-     * @param user user entity
-     * @return user response DTO
+     * @param user db row or detached copy
+     * @return hides password naturally (DTO lacks field)
      */
     public static UserResponseDto toDTO(final User user) {
         UserResponseDto dto = new UserResponseDto();

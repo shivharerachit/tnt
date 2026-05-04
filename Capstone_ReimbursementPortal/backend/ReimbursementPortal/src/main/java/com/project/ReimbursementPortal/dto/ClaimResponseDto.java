@@ -24,6 +24,16 @@ public class ClaimResponseDto {
     private Double amount;
 
     /**
+     * Claim title - a brief summary of the expense.
+     */
+    private String title;
+
+    /**
+     * Claim description - details about the expense being claimed.
+     */
+    private String description;
+
+    /**
      * Expense/claim date.
      */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")

@@ -11,29 +11,24 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-/**
- * Authentication service for user login.
- */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
     /**
-     * User repository for accessing user data from the database.
+     * Repository for accessing user data, used to find users by email during login.
      */
     private final UserRepository userRepository;
 
     /**
-     * Password encoder for verifying user passwords. Injected via constructor.
+     * Password encoder for verifying plaintext passwords against stored hashed passwords.
      */
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Authenticates a user with email and password.
-     *
-     * @param request login request with email and password
-     * @return authentication response with user details
-     * @throws UnauthorizedException if credentials are invalid
+     * @param request email + plaintext password from request body
+     * @return identity fields only (still need X-USER-ID on later calls — no JWT in this project)
+     * @throws UnauthorizedException wrong credentials
      */
     public AuthResponseDto login(final AuthRequestDto request) {
 

@@ -20,14 +20,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     /**
-     * Allowed origins for CORS, configurable via application properties.
+     * Comma-separated list of allowed CORS origins.
      */
-    @Value("${app.cors.allowed-origins:http://127.0.0.1:5500,http://localhost:5500}")
+    @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
 
     /**
-     * Password encoder bean using BCrypt hashing algorithm.
-     * @return password encoder instance
+     * @return BCrypt hasher (strength default from Spring)
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -35,8 +34,9 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS configuration source bean that sets allowed origins, methods, and headers.
-     * @return CORS configuration source instance
+     * Lets the static HTML (Live Server / IntelliJ) hit the API during dev.
+     *
+     * @return CORS rules from {@code app.cors.allowed-origins}
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -53,11 +53,11 @@ public class SecurityConfig {
     }
 
     /**
-     * Security filter chain configuration that enables CORS, disables CSRF, allows all requests,
-     * and sets session management to stateless.
-     * @param http the HttpSecurity object to configure
-     * @return the configured SecurityFilterChain instance
-     * @throws Exception if an error occurs during configuration
+     * Dev-style stack: open routes, no session cookie (we use X-USER-ID in front-end + service checks).
+     *
+     * @param http builder
+     * @return built chain
+     * @throws Exception config error
      */
     @Bean
     public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {

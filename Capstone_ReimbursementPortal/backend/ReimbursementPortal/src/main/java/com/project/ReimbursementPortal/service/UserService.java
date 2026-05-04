@@ -1,5 +1,6 @@
 package com.project.ReimbursementPortal.service;
 
+import com.project.ReimbursementPortal.dto.ChangePasswordRequestDto;
 import com.project.ReimbursementPortal.dto.UserRequestDto;
 import com.project.ReimbursementPortal.dto.UserResponseDto;
 import com.project.ReimbursementPortal.entity.User;
@@ -19,33 +20,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * User management business logic.
- */
+/** CRUD-ish users + hierarchy helper for claims reviewer lookup. */
 @Service
 public final class UserService {
 
     /**
-     * User persistence operations.
+     * Repository for accessing user data.
      */
     private final UserRepository userRepository;
 
     /**
-     * Password encoder for storing hashed passwords.
+     * Password encoder for hashing new passwords and verifying current ones during password changes.
      */
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Email validator for domain validation.
+     * Email validator to enforce company-domain-only registrations and prevent garbage data.
      */
     private final EmailValidator emailValidator;
 
     /**
-     * Creates a user service.
-     *
-     * @param userRepository user repository
-     * @param passwordEncoder password encoder
-     * @param emailValidator email validator
+     * @param userRepository JDBC-backed repo bean
+     * @param passwordEncoder bcrypt
+     * @param emailValidator company-domain gate
      */
     public UserService(
             final UserRepository userRepository,
@@ -57,11 +54,11 @@ public final class UserService {
     }
 
     /**
-     * Creates a new user (ADMIN only).
+     * ADMIN — hashes password, optional manager only for EMPLOYEE rows.
      *
-     * @param req request payload
-     * @param currentUserId current user id
-     * @return created user
+     * @param req incoming DTO
+     * @param currentUserId actor from header
+     * @return saved copy without password field in response type
      */
     public UserResponseDto createUser(final UserRequestDto req, final Long currentUserId) {
 
@@ -71,7 +68,6 @@ public final class UserService {
             throw new ForbiddenException("Only ADMIN can create users");
         }
 
-        // Email validation
         emailValidator.validate(req.getEmail());
 
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
@@ -98,29 +94,23 @@ public final class UserService {
             }
         }
 
-        // DTO → Entity
         User user = UserMapper.toEntity(req);
         user.setRole(newUserRole);
 
-        // Password encoding
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User saved = userRepository.save(user);
 
-        // Defensive: avoid a (rare) self-assignment if generated id happens to match provided managerId
         if (saved.getManagerId() != null && saved.getManagerId().equals(saved.getId())) {
             throw new BadRequestException("User cannot be their own manager");
         }
 
-        // Entity → DTO
         return UserMapper.toDTO(saved);
     }
 
     /**
-     * Returns all users (ADMIN only).
-     *
-     * @param currentUserId current user id
-     * @return list of users
+     * @param currentUserId must be ADMIN
+     * @return whole user table mapped to DTOs
      */
     public List<UserResponseDto> getAllUsers(final Long currentUserId) {
 
@@ -137,11 +127,9 @@ public final class UserService {
     }
 
     /**
-     * Returns users filtered by role (ADMIN only).
-     *
-     * @param role role to filter
-     * @param currentUserId current user id
-     * @return list of users
+     * @param role enum filter
+     * @param currentUserId admin id
+     * @return same shape as list-all but narrowed
      */
     public List<UserResponseDto> getUsersByRole(final UserRole role, final Long currentUserId) {
 
@@ -158,12 +146,12 @@ public final class UserService {
     }
 
     /**
-     * Assigns a manager to a user (ADMIN only).
+     * Refuses obvious cycles (A manages B manages A).
      *
-     * @param userId user id
-     * @param managerId manager id
-     * @param currentUserId current user id
-     * @return updated user
+     * @param userId employee (or non-admin) row
+     * @param managerId must be MANAGER or ADMIN in our rules
+     * @param currentUserId admin actor
+     * @return fresh DTO after save
      */
     public UserResponseDto assignManager(final Long userId, final Long managerId, final Long currentUserId) {
 
@@ -187,8 +175,8 @@ public final class UserService {
         User manager = userRepository.findById(managerId)
                 .orElseThrow(() -> new UserNotFoundException("Manager not found"));
 
-        if (manager.getRole() != UserRole.MANAGER) {
-            throw new BadRequestException("Assigned user is not a manager");
+        if (manager.getRole() != UserRole.MANAGER && manager.getRole() != UserRole.ADMIN) {
+            throw new BadRequestException("Assigned user is not a manager or admin");
         }
 
         validateNoManagementCycle(user.getId(), manager);
@@ -199,9 +187,10 @@ public final class UserService {
     }
 
     /**
-     * Validates that assigning the proposed manager to the user does not create a management cycle.
-     * @param userId the ID of the user being assigned a manager
-     * @param proposedManager the proposed manager user entity
+     * Climb proposedManager → managerId chain; bail if we'd hit {@code userId} again or an existing ring.
+     *
+     * @param userId leaf user row id
+     * @param proposedManager would-be boss entity (already loaded)
      */
     private void validateNoManagementCycle(final Long userId, final User proposedManager) {
         Set<Long> visited = new HashSet<>();
@@ -215,7 +204,6 @@ public final class UserService {
             }
 
             if (cursorId != null && !visited.add(cursorId)) {
-                // Existing cycle in DB; prevent creating/continuing it
                 throw new BadRequestException("Invalid manager assignment: existing management cycle detected");
             }
 
@@ -232,10 +220,10 @@ public final class UserService {
     }
 
     /**
-     * Deletes a user by id (ADMIN only).
+     * Hard delete row — beware FK fallout if claims still point here (DB rules win).
      *
-     * @param userId user id
-     * @param currentUserId current user id
+     * @param userId doomed id
+     * @param currentUserId admin actor
      */
     public void deleteUser(final Long userId, final Long currentUserId) {
 
@@ -253,11 +241,11 @@ public final class UserService {
     }
 
     /**
-     * Returns all users who report to the given manager (MANAGER/ADMIN).
+     * MANAGER sees own subtree; ADMIN can query arbitrary manager ids.
      *
-     * @param managerId manager id
-     * @param currentUserId current user id
-     * @return list of users
+     * @param managerId FK target in users.manager_id column
+     * @param currentUserId caller guard
+     * @return orphan list if nobody reports (still 200 [])
      */
     public List<UserResponseDto> getUsersUnderManager(final Long managerId, final Long currentUserId) {
 
@@ -274,9 +262,9 @@ public final class UserService {
     }
 
     /**
-     * Returns any ADMIN id (used as fallback reviewer).
+     * Claim submit uses this when EMPLOYEE has null manager row.
      *
-     * @return admin id
+     * @return first ADMIN primary key arbitrarily
      */
     public Long getAnyAdminId() {
 
@@ -287,6 +275,37 @@ public final class UserService {
                 .getId();
     }
 
+    /**
+     * Controller already checks URL id vs header match.
+     *
+     * @param currentUserId self
+     * @param req current + new plaintext (hashed server-side only)
+     * @return dto after save
+     */
+    public UserResponseDto changePassword(
+            final Long currentUserId,
+            final ChangePasswordRequestDto req
+    ) {
+        User user = getUser(currentUserId);
+
+        if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
+            throw new BadRequestException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(req.getNewPassword(), user.getPassword())) {
+            throw new BadRequestException("New password must be different from current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+
+        return UserMapper.toDTO(userRepository.save(user));
+    }
+
+    /**
+     * @param userId PK
+     * @return hydrated user
+     * @throws UserNotFoundException stale id from header tinkering
+     */
     private User getUser(final Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));

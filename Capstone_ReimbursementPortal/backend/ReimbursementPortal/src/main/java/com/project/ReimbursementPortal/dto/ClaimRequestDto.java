@@ -30,11 +30,30 @@ public class ClaimRequestDto {
     private static final int DESCRIPTION_MAX_LENGTH = 500;
 
     /**
+     * Minimum title length allowed.
+     */
+    private static final int TITLE_MIN_LENGTH = 3;
+
+    /**
+     * Maximum title length allowed.
+     */
+    private static final int TITLE_MAX_LENGTH = 100;
+
+    /**
      * Claim amount.
      */
     @NotNull(message = "Amount is required")
     @Positive(message = "Amount must be greater than 0")
     private Double amount;
+
+    /**
+     * Claim title - a brief summary of the expense.
+     */
+    @NotNull(message = "Title is required")
+    @NotBlank(message = "Title cannot be blank")
+    @Size(min = TITLE_MIN_LENGTH, max = TITLE_MAX_LENGTH,
+            message = "Title must be between 3 and 100 characters")
+    private String title;
 
     /**
      * Claim description.

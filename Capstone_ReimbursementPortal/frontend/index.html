@@ -3,25 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
+  <title>ExpenseEase — Sign in</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    .login-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
+    .login-left {
+      flex: 1;
+      background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 42%, #1d4ed8 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      padding: 3rem;
+      text-align: center;
+    }
+    .login-left h1 {
+      font-size: 2.5rem;
+      margin: 0 0 1rem 0;
+      font-weight: bold;
+    }
+    .login-left p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      opacity: 0.95;
+      max-width: 400px;
+    }
+    .login-right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      background: #e8edf5;
+    }
+    .login-form-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #d8dee9;
+    }
+    .login-form-card h2 {
+      margin-top: 0;
+      text-align: center;
+      color: var(--text);
+      font-size: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .login-container {
+        flex-direction: column;
+      }
+      .login-left {
+        min-height: 200px;
+        padding: 2rem;
+      }
+      .login-left h1 {
+        font-size: 1.8rem;
+      }
+      .login-left p {
+        font-size: 1rem;
+      }
+      .login-right {
+        padding: 2rem;
+      }
+      .login-form-card {
+        max-width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-  <main class="container" style="max-width:560px">
-    <section class="card">
-      <h1 class="m0">Reimbursement Portal Login</h1>
-      <p id="msg" class="msg">Sign in to continue.</p>
-      <form id="loginForm">
-        <label>Email
-          <input id="email" type="email" required />
-        </label>
-        <label>Password
-          <input id="password" type="password" required />
-        </label>
-        <button class="btn btn-primary" type="submit">Login</button>
-      </form>
-    </section>
-  </main>
+  <div class="login-container">
+    <!-- Left side: Branding -->
+    <div class="login-left">
+      <h1>ExpenseEase</h1>
+      <p>Submit expense claims, track approvals, and get reimbursed — a simple flow for employees, managers, and admins.</p>
+    </div>
+
+    <!-- Right side: Login Form -->
+    <div class="login-right">
+      <div class="login-form-card">
+        <h2>Login</h2>
+        <div id="msg" class="msg hidden"></div>
+        <form id="loginForm" novalidate>
+          <label>Email
+            <input id="email" type="text" autocomplete="username" inputmode="email" maxlength="254" spellcheck="false" />
+          </label>
+          <label>Password
+            <input id="password" type="password" autocomplete="current-password" minlength="7" maxlength="100" required />
+          </label>
+          <p class="small form-hint">Password must be more than 6 characters (max 100).</p>
+          <button class="btn btn-primary" type="submit" style="width: 100%; margin-top: 1rem;">Sign In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/script.js"></script>

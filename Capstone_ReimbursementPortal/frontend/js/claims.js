@@ -1,216 +1,535 @@
-// CLAIMS PAGE SCRIPT
-// Shows claims and allows submitting new ones
+/**
+ * CLAIMS PAGE (ExpenseEase)
+ *
+ * Flow:
+ * 1. loadUsers() for name lookup in the table.
+ * 2. loadClaims() calls the paginated API with page, size, sort, and optional status
+ *    (all applied in the database — not only on the current page).
+ * 3. View / Review open modals using GET /claims/{id} so rows work even off-page.
+ */
 
-
-// Check if user is logged in and set up page
 setupPage("claims");
 
-// Get HTML elements
-var messageBox = document.getElementById("msg");
-var claimsTableBody = document.getElementById("claimsBody");
-var pageInfoElement = document.getElementById("pageInfo");
-var sizeSelect = document.getElementById("size");
-var prevButton = document.getElementById("prev");
-var nextButton = document.getElementById("next");
-var claimForm = document.getElementById("claimForm");
-var submitCard = document.getElementById("submitCard");
+let messageBox = document.getElementById("msg");
+let claimsTableBody = document.getElementById("claimsBody");
+let pageInfoElement = document.getElementById("pageInfo");
+let sizeSelect = document.getElementById("size");
+let prevButton = document.getElementById("prev");
+let nextButton = document.getElementById("next");
+let claimForm = document.getElementById("claimForm");
+let submitClaimBtn = document.getElementById("submitClaimBtn");
+let filterStatusSelect = document.getElementById("filterStatus");
 
-// Variables to remember state
-var allUsers = [];
-var currentPage = 1;
-var totalPages = 1;
+let allUsers = [];
+let currentPage = 1;
+let totalPages = 1;
+/** Must match JPA field names on Claim (id, employeeId, title, amount, status, …) */
+let sortColumn = "id";
+let sortAsc = false;
 
-// Get the correct API path based on user role
 function getClaimsPath() {
-  var role = getUserRole();
+  let role = getUserRole();
 
   if (role === "ADMIN") {
     return "/claims/all/paginated";
-  } else if (role === "MANAGER") {
-    return "/claims/reviewer/paginated";
-  } else {
-    // EMPLOYEE
-    return "/claims/my/paginated";
   }
+  if (role === "MANAGER") {
+    return "/claims/reviewer/paginated";
+  }
+  return "/claims/my/paginated";
 }
 
-// Get the correct users API path based on user role
 function getUsersPath() {
-  var role = getUserRole();
-  var session = loadSession();
+  let role = getUserRole();
+  let session = loadSession();
 
   if (role === "ADMIN") {
     return "/users";
-  } else if (role === "MANAGER") {
-    return "/users/manager/" + session.userId;
-  } else {
-    // EMPLOYEE - no API call needed
-    return null;
   }
+  if (role === "MANAGER") {
+    return "/users/manager/" + session.userId;
+  }
+  return null;
 }
 
-// Find a user name by their ID
 function getUserName(userId) {
-  var session = loadSession();
+  let session = loadSession();
 
-  // If it's the current user, use their name
   if (String(userId) === String(session.userId)) {
     return session.name;
   }
 
-  // Otherwise, search in the users list
-  var i;
+  let i;
   for (i = 0; i < allUsers.length; i++) {
     if (String(allUsers[i].id) === String(userId)) {
       return allUsers[i].name;
     }
   }
 
-  // If not found, show the ID
   return "#" + userId;
 }
 
-// Display claims in the table
+/**
+ * Query string for Spring Data: page, size, sort=property,direction, optional status=ENUM
+ */
+function buildClaimsQueryString() {
+  let pageSize = Number(sizeSelect.value);
+  let parts = [];
+  parts.push("page=" + encodeURIComponent(String(currentPage - 1)));
+  parts.push("size=" + encodeURIComponent(String(pageSize)));
+  parts.push(
+    "sort=" +
+      encodeURIComponent(sortColumn + "," + (sortAsc ? "asc" : "desc"))
+  );
+  /** Use claimStatus (not status) — avoids clashes with Spring sort/page machinery */
+  let statusVal = "";
+  if (filterStatusSelect) {
+    statusVal = String(filterStatusSelect.value || "").trim();
+  }
+  if (statusVal) {
+    parts.push("claimStatus=" + encodeURIComponent(statusVal));
+  }
+  return parts.join("&");
+}
+
+function buildActionButtonsHtml(claim, role) {
+  let html = '<div class="claims-actions">';
+  html +=
+    '<button type="button" class="btn btn-secondary btn-sm" data-claim-id="' +
+    claim.id +
+    '" data-action="view">View</button>';
+
+  let canReview =
+    (role === "MANAGER" || role === "ADMIN") && claim.status === "SUBMITTED";
+  if (canReview) {
+    html +=
+      '<button type="button" class="btn btn-review btn-sm" data-claim-id="' +
+      claim.id +
+      '" data-action="review">Review</button>';
+  }
+
+  if (role === "ADMIN") {
+    html +=
+      '<button type="button" class="btn btn-outline-danger btn-sm" data-claim-id="' +
+      claim.id +
+      '" data-action="delete">Delete</button>';
+  }
+
+  html += "</div>";
+  return html;
+}
+
+function attachActionButtonListeners() {
+  let buttons = claimsTableBody.querySelectorAll("button[data-action]");
+  let i;
+  for (i = 0; i < buttons.length; i++) {
+    buttons[i].addEventListener("click", function () {
+      let claimId = this.getAttribute("data-claim-id");
+      let action = this.getAttribute("data-action");
+
+      if (action === "view") {
+        handleViewClaim(claimId);
+      } else if (action === "review") {
+        handleSubmitReview(claimId);
+      } else if (action === "delete") {
+        handleDeleteClaim(claimId);
+      }
+    });
+  }
+}
+
 function displayClaims(claims) {
-  // If no claims, show a message
   if (claims.length === 0) {
-    claimsTableBody.innerHTML = '<tr><td colspan="6">No claims found.</td></tr>';
+    claimsTableBody.innerHTML =
+      '<tr><td colspan="8">No claims found.</td></tr>';
     return;
   }
 
-  // Build HTML for each claim row
-  var html = "";
-  var i;
+  let html = "";
+  let i;
+  let role = getUserRole();
+
   for (i = 0; i < claims.length; i++) {
-    var claim = claims[i];
-    html = html + '<tr>' +
-      '<td>' + claim.id + '</td>' +
-      '<td>' + getUserName(claim.employeeId) + '</td>' +
-      '<td>' + formatMoney(claim.amount) + '</td>' +
-      '<td><span class="badge ' + claim.status + '">' + claim.status + '</span></td>' +
-      '<td>' + (claim.reviewerId ? getUserName(claim.reviewerId) : '-') + '</td>' +
-      '<td>' + (claim.comments || '-') + '</td>' +
-      '</tr>';
+    let claim = claims[i];
+    let actionHtml = buildActionButtonsHtml(claim, role);
+
+    html += "<tr>";
+    html += "<td>" + claim.id + "</td>";
+    html += "<td>" + getUserName(claim.employeeId) + "</td>";
+    html += "<td>" + (claim.title || "-") + "</td>";
+    html += "<td>" + formatMoney(claim.amount) + "</td>";
+    html +=
+      '<td><span class="badge ' +
+      claim.status +
+      '">' +
+      claim.status +
+      "</span></td>";
+    html +=
+      "<td>" +
+      (claim.reviewerId ? getUserName(claim.reviewerId) : "-") +
+      "</td>";
+    html += "<td>" + (claim.comments || "-") + "</td>";
+    html += "<td>" + actionHtml + "</td>";
+    html += "</tr>";
   }
 
-  // Update the table
   claimsTableBody.innerHTML = html;
+  attachActionButtonListeners();
 }
 
-// Load claims from the API
 function loadClaims() {
-  var pageSize = Number(sizeSelect.value);
-  var claimsPath = getClaimsPath();
-  var path = claimsPath + "?page=" + (currentPage - 1) + "&size=" + pageSize;
+  let claimsPath = getClaimsPath();
+  let path = claimsPath + "?" + buildClaimsQueryString();
 
-  callAPI(path).then(function(response) {
-    var claimsData = extractData(response);
+  callAPI(path)
+    .then(function (response) {
+      let claimsData = extractData(response);
 
-    // Update page info
-    if (claimsData) {
-      totalPages = claimsData.totalPages || 1;
-      currentPage = (claimsData.number || 0) + 1;
-      pageInfoElement.textContent = "Page " + currentPage + " of " + totalPages;
-      displayClaims(claimsData.content || []);
-    } else {
-      displayClaims([]);
-    }
-
-    showMessage("msg", "Claims loaded.", false);
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
-  });
+      if (claimsData) {
+        totalPages = claimsData.totalPages || 1;
+        currentPage = (claimsData.number || 0) + 1;
+        pageInfoElement.textContent =
+          "Page " + currentPage + " of " + totalPages;
+        displayClaims(claimsData.content || []);
+      } else {
+        displayClaims([]);
+      }
+    })
+    .catch(function (error) {
+      showMessage("msg", error.message, true);
+      if (
+        error.message.indexOf("User not found") !== -1 ||
+        error.message.indexOf("Invalid") !== -1
+      ) {
+        clearSession();
+      }
+    });
 }
 
-// Load users list from API
-function loadUsers() {
-  var usersPath = getUsersPath();
-  var session = loadSession();
+function handleDeleteClaim(claimId) {
+  let confirmed = window.confirm("Delete claim #" + claimId + "?");
+  if (!confirmed) {
+    return;
+  }
 
-  // For employees, just use their own info
+  callAPI("/claims/" + claimId, {
+    method: "DELETE",
+  })
+    .then(function () {
+      showMessage("msg", "Claim deleted.", false);
+      loadClaims();
+    })
+    .catch(function (error) {
+      showMessage("msg", error.message, true);
+      if (
+        error.message.indexOf("User not found") !== -1 ||
+        error.message.indexOf("Invalid") !== -1
+      ) {
+        clearSession();
+      }
+    });
+}
+
+function renderClaimDetailHtml(claim) {
+  return (
+    '<div class="claim-details-grid">' +
+    "<div><strong>Claim ID:</strong> " +
+    claim.id +
+    "</div>" +
+    "<div><strong>Employee:</strong> " +
+    getUserName(claim.employeeId) +
+    "</div>" +
+    "<div><strong>Title:</strong> " +
+    (claim.title || "-") +
+    "</div>" +
+    "<div><strong>Description:</strong> " +
+    (claim.description || "-") +
+    "</div>" +
+    "<div><strong>Amount:</strong> " +
+    formatMoney(claim.amount) +
+    "</div>" +
+    '<div><strong>Status:</strong> <span class="badge ' +
+    claim.status +
+    '">' +
+    claim.status +
+    "</span></div>" +
+    "<div><strong>Date:</strong> " +
+    (claim.date ? new Date(claim.date).toLocaleDateString() : "-") +
+    "</div>" +
+    "<div><strong>Reviewer:</strong> " +
+    (claim.reviewerId ? getUserName(claim.reviewerId) : "-") +
+    "</div>" +
+    "<div><strong>Comments:</strong> " +
+    (claim.comments || "-") +
+    "</div>" +
+    "</div>"
+  );
+}
+
+function handleViewClaim(claimId) {
+  callAPI("/claims/" + encodeURIComponent(claimId))
+    .then(function (response) {
+      let claim = extractData(response);
+      if (!claim) {
+        showMessage("msg", "Claim not found.", true);
+        return;
+      }
+      document.getElementById("claimDetails").innerHTML =
+        renderClaimDetailHtml(claim);
+      openModal("viewClaimModal");
+    })
+    .catch(function (error) {
+      showMessage("msg", error.message, true);
+      if (
+        error.message.indexOf("User not found") !== -1 ||
+        error.message.indexOf("Invalid") !== -1
+      ) {
+        clearSession();
+      }
+    });
+}
+
+function handleSubmitReview(claimId) {
+  callAPI("/claims/" + encodeURIComponent(claimId))
+    .then(function (response) {
+      let claim = extractData(response);
+      if (!claim) {
+        showMessage("msg", "Claim not found.", true);
+        return;
+      }
+      document.getElementById("reviewClaimId").value = claimId;
+      document.getElementById("reviewClaimInfo").textContent =
+        "Claim #" +
+        claimId +
+        " — " +
+        (claim.title || "(no title)") +
+        " — " +
+        formatMoney(claim.amount);
+      document.getElementById("reviewForm").reset();
+      document.getElementById("reviewClaimId").value = claimId;
+      openModal("submitReviewModal");
+    })
+    .catch(function (error) {
+      showMessage("msg", error.message, true);
+      if (
+        error.message.indexOf("User not found") !== -1 ||
+        error.message.indexOf("Invalid") !== -1
+      ) {
+        clearSession();
+      }
+    });
+}
+
+function submitReview() {
+  document.getElementById("reviewForm").dispatchEvent(new Event("submit"));
+}
+
+function submitClaim() {
+  claimForm.dispatchEvent(new Event("submit"));
+}
+
+function loadUsers() {
+  let usersPath = getUsersPath();
+  let session = loadSession();
+
   if (!usersPath) {
-    allUsers = [{
-      id: session.userId,
-      name: session.name
-    }];
+    allUsers = [
+      {
+        id: session.userId,
+        name: session.name,
+      },
+    ];
     return Promise.resolve();
   }
 
-  // For admins and managers, fetch the users
-  return callAPI(usersPath).then(function(response) {
+  return callAPI(usersPath).then(function (response) {
     allUsers = extractData(response) || [];
   });
 }
 
-// Handle page size change
-sizeSelect.addEventListener("change", function() {
+sizeSelect.addEventListener("change", function () {
   currentPage = 1;
   loadClaims();
 });
 
-// Handle previous button
-prevButton.addEventListener("click", function() {
+prevButton.addEventListener("click", function () {
   if (currentPage > 1) {
     currentPage = currentPage - 1;
     loadClaims();
   }
 });
 
-// Handle next button
-nextButton.addEventListener("click", function() {
+nextButton.addEventListener("click", function () {
   if (currentPage < totalPages) {
     currentPage = currentPage + 1;
     loadClaims();
   }
 });
 
-// Only show the submit form if user is an EMPLOYEE
-var role = getUserRole();
-if (role !== "EMPLOYEE") {
-  submitCard.classList.add("hidden");
-} else {
-  // Set up the submit form for employees
-  var session = loadSession();
-  document.getElementById("employeeLine").textContent = "Employee: " + session.name + " (#" + session.userId + ")";
-
-  claimForm.addEventListener("submit", function(event) {
-    event.preventDefault();
-
-    // Get form values
-    var amount = Number(document.getElementById("amount").value);
-    var description = document.getElementById("description").value.trim();
-    var claimLimit = CONFIG.CLAIM_LIMIT;
-
-    // Check if amount is within limit
-    if (amount > claimLimit) {
-      showMessage("msg", "Amount is above configured limit.", true);
-      return;
-    }
-
-    // Submit the claim
-    callAPI("/claims", {
-      method: "POST",
-      body: JSON.stringify({
-        amount: amount,
-        description: description,
-        employeeId: session.userId
-      })
-    }).then(function() {
-      claimForm.reset();
-      loadClaims();
-    }).catch(function(error) {
-      showMessage("msg", error.message, true);
-      if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-        clearSession();
-      }
-    });
+if (filterStatusSelect) {
+  filterStatusSelect.addEventListener("change", function () {
+    currentPage = 1;
+    loadClaims();
   });
 }
 
-// Load users first, then load claims
-loadUsers().then(function() {
+let sortableHeaders = document.querySelectorAll("th.sortable");
+for (let h = 0; h < sortableHeaders.length; h++) {
+  sortableHeaders[h].addEventListener("click", function () {
+    let col = this.getAttribute("data-sort");
+    if (sortColumn === col) {
+      sortAsc = !sortAsc;
+    } else {
+      sortColumn = col;
+      sortAsc = true;
+    }
+    currentPage = 1;
+    loadClaims();
+  });
+}
+
+let role = getUserRole();
+if (role === "EMPLOYEE") {
+  submitClaimBtn.style.display = "block";
+
+  let session = loadSession();
+  document.getElementById("employeeLine").textContent =
+    "Employee: " + session.name + " (#" + session.userId + ")";
+
+  submitClaimBtn.addEventListener("click", function () {
+    openModal("submitClaimModal");
+  });
+
+  claimForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    let title = document.getElementById("title").value.trim();
+    let description = document.getElementById("description").value.trim();
+    let amount = Number(document.getElementById("amount").value);
+    let dateInput = document.getElementById("date").value;
+    let claimLimit = CONFIG.CLAIM_LIMIT;
+
+    if (!title || title.length < 3 || title.length > 100) {
+      showMessage("msg", "Title must be between 3 and 100 characters.", true);
+      return;
+    }
+
+    if (!description || description.length < 5 || description.length > 500) {
+      showMessage(
+        "msg",
+        "Description must be between 5 and 500 characters.",
+        true
+      );
+      return;
+    }
+
+    if (amount <= 0) {
+      showMessage("msg", "Amount must be greater than 0.", true);
+      return;
+    }
+
+    if (amount > claimLimit) {
+      showMessage(
+        "msg",
+        "Amount is above configured limit (₹" + claimLimit + ").",
+        true
+      );
+      return;
+    }
+
+    if (dateInput) {
+      let selectedDate = new Date(dateInput);
+      let today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        showMessage("msg", "Date cannot be in the future.", true);
+        return;
+      }
+    }
+
+    let requestBody = {
+      title: title,
+      description: description,
+      amount: amount,
+      employeeId: session.userId,
+    };
+
+    if (dateInput) {
+      requestBody.date = dateInput;
+    }
+
+    callAPI("/claims", {
+      method: "POST",
+      body: JSON.stringify(requestBody),
+    })
+      .then(function () {
+        claimForm.reset();
+        closeModal("submitClaimModal");
+        currentPage = 1;
+        loadClaims();
+        showMessage("msg", "Claim submitted successfully.", false);
+      })
+      .catch(function (error) {
+        showMessage("msg", error.message, true);
+        if (
+          error.message.indexOf("User not found") !== -1 ||
+          error.message.indexOf("Invalid") !== -1
+        ) {
+          clearSession();
+        }
+      });
+  });
+}
+
+let reviewForm = document.getElementById("reviewForm");
+if (reviewForm) {
+  reviewForm.addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    let claimId = document.getElementById("reviewClaimId").value;
+    let decision = document.getElementById("reviewDecision").value;
+    let comments = document.getElementById("reviewComments").value.trim();
+
+    if (!decision) {
+      showMessage(
+        "msg",
+        "Please select a decision (Approve or Reject).",
+        true
+      );
+      return;
+    }
+
+    if (!comments) {
+      showMessage("msg", "Comments are required.", true);
+      return;
+    }
+
+    let endpoint =
+      decision === "APPROVED"
+        ? "/claims/" + claimId + "/approve"
+        : "/claims/" + claimId + "/reject";
+
+    callAPI(endpoint + "?comments=" + encodeURIComponent(comments), {
+      method: "PUT",
+    })
+      .then(function () {
+        reviewForm.reset();
+        closeModal("submitReviewModal");
+        loadClaims();
+        showMessage("msg", "Review submitted successfully.", false);
+      })
+      .catch(function (error) {
+        showMessage("msg", error.message, true);
+        if (
+          error.message.indexOf("User not found") !== -1 ||
+          error.message.indexOf("Invalid") !== -1
+        ) {
+          clearSession();
+        }
+      });
+  });
+}
+
+loadUsers().then(function () {
   loadClaims();
 });

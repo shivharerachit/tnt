@@ -5,31 +5,30 @@
 setupPage("reviews");
 
 // Only admins and managers can access this page
-var role = getUserRole();
+let role = getUserRole();
 if (role !== "ADMIN" && role !== "MANAGER") {
   window.location.href = "dashboard.html";
 }
 
 // Get HTML elements
-var messageBox = document.getElementById("msg");
-var pendingList = document.getElementById("pendingList");
-var claimIdSelect = document.getElementById("claimId");
-var reviewForm = document.getElementById("reviewForm");
-var decisionSelect = document.getElementById("decision");
-var commentInput = document.getElementById("comment");
+let messageBox = document.getElementById("msg");
+let pendingList = document.getElementById("pendingList");
+let claimIdSelect = document.getElementById("claimId");
+let reviewForm = document.getElementById("reviewForm");
+let decisionSelect = document.getElementById("decision");
+let commentInput = document.getElementById("comment");
 
 // Load pending claims
 function loadPendingClaims() {
-  var path = "/claims/reviewer/paginated?page=0&size=30";
+  let path = "/claims/reviewer/paginated?page=0&size=30";
 
   callAPI(path).then(function(response) {
-    var claimsData = extractData(response);
-    var claims = claimsData.content || [];
+    let claimsData = extractData(response);
+    let claims = claimsData.content || [];
 
     // Filter only SUBMITTED claims
-    var pending = [];
-    var i;
-    for (i = 0; i < claims.length; i++) {
+    let pending = [];
+    for (let i = 0; i < claims.length; i++) {
       if (claims[i].status === "SUBMITTED") {
         pending.push(claims[i]);
       }
@@ -43,22 +42,20 @@ function loadPendingClaims() {
     }
 
     // Build HTML for pending list
-    var html = "";
-    var i;
-    for (i = 0; i < pending.length; i++) {
-      var claim = pending[i];
+    let html = "";
+    for (let i = 0; i < pending.length; i++) {
+      let claim = pending[i];
       html = html + '<p>#' + claim.id + ' | Employee: ' + claim.employeeId + ' | ' + formatMoney(claim.amount) + '</p>';
     }
     pendingList.innerHTML = html;
 
     // Build options for claim dropdown
-    var optionsHTML = "";
-    for (i = 0; i < pending.length; i++) {
+    let optionsHTML = "";
+    for (let i = 0; i < pending.length; i++) {
       optionsHTML = optionsHTML + '<option value="' + pending[i].id + '">Claim #' + pending[i].id + '</option>';
     }
     claimIdSelect.innerHTML = optionsHTML;
 
-    showMessage("msg", "Pending claims loaded.", false);
   }).catch(function(error) {
     showMessage("msg", error.message, true);
     if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
@@ -71,12 +68,12 @@ function loadPendingClaims() {
 reviewForm.addEventListener("submit", function(event) {
   event.preventDefault();
 
-  var claimId = claimIdSelect.value;
-  var decision = decisionSelect.value;
-  var comments = commentInput.value.trim();
+  let claimId = claimIdSelect.value;
+  let decision = decisionSelect.value;
+  let comments = commentInput.value.trim();
 
   // Determine the API endpoint based on decision
-  var endpoint;
+  let endpoint;
   if (decision === "APPROVED") {
     endpoint = "/claims/" + claimId + "/approve";
   } else {
@@ -84,8 +81,8 @@ reviewForm.addEventListener("submit", function(event) {
   }
 
   // URL encode the comments
-  var encodedComments = encodeURIComponent(comments);
-  var fullPath = endpoint + "?comments=" + encodedComments;
+  let encodedComments = encodeURIComponent(comments);
+  let fullPath = endpoint + "?comments=" + encodedComments;
 
   callAPI(fullPath, {
     method: "PUT"

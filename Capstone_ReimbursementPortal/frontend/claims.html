@@ -3,59 +3,157 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claims</title>
+  <title>ExpenseEase — Claims</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <main class="container">
-    <header class="top">
-      <div>
-        <h1 class="m0">Claims</h1>
-        <p id="sessionLine" class="small m0"></p>
+<body class="with-sidebar">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">ExpenseEase</h2>
+      <p class="sidebar-tagline">Reimbursement portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+      <li><a href="users.html" data-page="users" id="navUsers">Users</a></li>
+      <li><a href="claims.html" data-page="claims">Claims</a></li>
+    </nav>
+    <div class="sidebar-footer">
+      <p id="sidebarUser" class="small m0"></p>
+      <div class="sidebar-footer-actions">
+        <a href="profile.html" class="sidebar-footer-link" data-page="profile">Profile</a>
+        <button type="button" id="logoutBtn" class="sidebar-footer-link sidebar-footer-link-logout">Logout</button>
       </div>
-      <div class="row">
-        <nav class="nav">
-          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
-          <a id="navUsers" data-page="users" href="users.html">Users</a>
-          <a data-page="claims" href="claims.html">Claims</a>
-          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
-          <a data-page="tracking" href="tracking.html">Tracking</a>
-        </nav>
-        <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1>Claims</h1>
       </div>
     </header>
 
-    <p id="msg" class="msg"></p>
+    <main class="container">
+      <div id="msg" class="msg hidden"></div>
 
-    <section id="submitCard" class="card">
-      <h3>Submit claim</h3>
-      <p id="employeeLine" class="small"></p>
-      <form id="claimForm">
-        <label>Amount<input id="amount" type="number" min="1" step="0.01" required /></label>
-        <label>Description<textarea id="description" rows="4" required></textarea></label>
-        <button class="btn btn-primary" type="submit">Submit claim</button>
-      </form>
-    </section>
-
-    <section class="card">
-      <div class="row">
-        <label>Page size
-          <select id="size">
-            <option value="5">5</option>
-            <option value="10" selected>10</option>
-            <option value="20">20</option>
+      <!-- Submit button for employees -->
+      <div class="claims-toolbar">
+        <button class="btn btn-primary" id="submitClaimBtn" style="display:none;">+ Submit Claim</button>
+        <div class="claims-filters">
+          <select id="filterStatus">
+            <option value="">All statuses</option>
+            <option value="SUBMITTED">Submitted</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
           </select>
-        </label>
-        <button id="prev" class="btn" type="button">Previous</button>
-        <button id="next" class="btn" type="button">Next</button>
-        <span id="pageInfo" class="small"></span>
+        </div>
       </div>
-      <table>
-        <thead><tr><th>ID</th><th>Employee</th><th>Amount</th><th>Status</th><th>Reviewer</th><th>Comments</th></tr></thead>
-        <tbody id="claimsBody"></tbody>
-      </table>
-    </section>
-  </main>
+
+      <section class="card">
+        <div class="table-wrapper">
+        <table class="claims-table">
+          <thead><tr><th class="sortable" data-sort="id">ID ↕</th><th class="sortable" data-sort="employeeId">Employee ↕</th><th class="sortable" data-sort="title">Title ↕</th><th class="sortable" data-sort="amount">Amount ↕</th><th class="sortable" data-sort="status">Status ↕</th><th>Reviewer</th><th>Comments</th><th>Actions</th></tr></thead>
+          <tbody id="claimsBody"></tbody>
+        </table>
+        </div>
+
+        <!-- Pagination at bottom -->
+        <div class="claims-pagination">
+          <label>Page size
+            <select id="size">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="20">20</option>
+            </select>
+          </label>
+          <button id="prev" class="btn" type="button">Previous</button>
+          <button id="next" class="btn" type="button">Next</button>
+          <span id="pageInfo" class="small"></span>
+        </div>
+      </section>
+
+      <!-- Modal for submitting claim -->
+      <div class="modal-overlay" id="submitClaimModal" style="display:none;">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title m0">Submit new claim</h2>
+              <p class="modal-subtitle">Describe the expense and amount for reimbursement.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('submitClaimModal')" aria-label="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <p id="employeeLine" class="small"></p>
+            <form id="claimForm">
+              <label>Title<input id="title" type="text" minlength="3" maxlength="100" placeholder="Brief summary of the expense" required /></label>
+              <label>Description<textarea id="description" rows="4" minlength="5" maxlength="500" placeholder="Detailed description (5-500 characters)" required></textarea></label>
+              <label>Amount<input id="amount" type="number" min="0.01" step="0.01" placeholder="Must be greater than 0" required /></label>
+              <label>Date (Optional)<input id="date" type="date" /></label>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeModal('submitClaimModal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="submitClaim()">Submit Claim</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal for viewing claim details -->
+      <div class="modal-overlay" id="viewClaimModal" style="display:none;">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title m0">Claim details</h2>
+              <p class="modal-subtitle">Read-only summary of this expense claim.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('viewClaimModal')" aria-label="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <div id="claimDetails"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeModal('viewClaimModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal for submitting review -->
+      <div class="modal-overlay" id="submitReviewModal" style="display:none;">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title m0">Review claim</h2>
+              <p class="modal-subtitle">Approve or reject with a short comment.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('submitReviewModal')" aria-label="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <p id="reviewClaimInfo" class="small modal-review-context"></p>
+            <form id="reviewForm">
+              <input type="hidden" id="reviewClaimId" />
+              <label>Decision
+                <select id="reviewDecision" required>
+                  <option value="">Select decision</option>
+                  <option value="APPROVED">Approve</option>
+                  <option value="REJECTED">Reject</option>
+                </select>
+              </label>
+              <label>Comments (Required)
+                <textarea id="reviewComments" rows="4" placeholder="Provide comments for your decision" required></textarea>
+              </label>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeModal('submitReviewModal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="submitReview()">Submit Review</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/claims.js"></script>

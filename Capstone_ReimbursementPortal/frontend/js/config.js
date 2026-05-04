@@ -1,10 +1,9 @@
 // CONFIGURATION FILE
 // This file stores all settings needed by the app
 
-// Store configuration in a global object that can be accessed from anywhere
-var CONFIG = {
+// Global config (object is frozen at reference level; mutate fields if you must)
+const CONFIG = {
   BACKEND_URL: "http://localhost:8080",
-  ALLOWED_DOMAIN: "@company.com",
   CLAIM_LIMIT: 50000
 };
 

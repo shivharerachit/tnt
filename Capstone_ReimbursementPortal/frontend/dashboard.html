@@ -3,36 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>ExpenseEase — Dashboard</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <main class="container">
-    <header class="top">
-      <div>
-        <h1 class="m0">Dashboard</h1>
-        <p id="sessionLine" class="small m0"></p>
+<body class="with-sidebar">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">ExpenseEase</h2>
+      <p class="sidebar-tagline">Reimbursement portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+      <li><a href="users.html" data-page="users" id="navUsers">Users</a></li>
+      <li><a href="claims.html" data-page="claims">Claims</a></li>
+    </nav>
+    <div class="sidebar-footer">
+      <p id="sidebarUser" class="small m0"></p>
+      <div class="sidebar-footer-actions">
+        <a href="profile.html" class="sidebar-footer-link" data-page="profile">Profile</a>
+        <button type="button" id="logoutBtn" class="sidebar-footer-link sidebar-footer-link-logout">Logout</button>
       </div>
-      <div class="row">
-        <nav class="nav">
-          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
-          <a id="navUsers" data-page="users" href="users.html">Users</a>
-          <a data-page="claims" href="claims.html">Claims</a>
-          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
-          <a data-page="tracking" href="tracking.html">Tracking</a>
-        </nav>
-        <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1>Dashboard</h1>
       </div>
     </header>
 
-    <p id="msg" class="msg"></p>
+    <main class="container">
+      <div id="msg" class="msg hidden"></div>
 
-    <section class="grid-3">
-      <article class="card"><h3 class="m0">Users</h3><p id="usersCount" class="small">0</p></article>
-      <article class="card"><h3 class="m0">Claims</h3><p id="claimsCount" class="small">0</p></article>
-      <article class="card"><h3 class="m0">Pending</h3><p id="pendingCount" class="small">0</p></article>
-    </section>
-  </main>
+      <section class="card dashboard-welcome">
+        <p class="dashboard-greeting m0" id="dashboardGreeting">Welcome back</p>
+        <p class="small dashboard-welcome-sub m0" id="dashboardWelcomeSub"></p>
+      </section>
+
+      <section class="dashboard-stats" aria-label="Summary statistics">
+        <article class="dashboard-stat-card dashboard-stat-accent-slate">
+          <span class="dashboard-stat-mark" aria-hidden="true">U</span>
+          <div>
+            <h4 class="dashboard-stat-heading m0" id="statUsersHeading">Users</h4>
+            <p class="dashboard-stat-value m0" id="usersCount">—</p>
+            <p class="dashboard-stat-foot small m0" id="statUsersFoot"></p>
+          </div>
+        </article>
+        <article class="dashboard-stat-card dashboard-stat-accent-blue">
+          <span class="dashboard-stat-mark" aria-hidden="true">C</span>
+          <div>
+            <h4 class="dashboard-stat-heading m0" id="statClaimsHeading">Claims</h4>
+            <p class="dashboard-stat-value m0" id="claimsCount">—</p>
+            <p class="dashboard-stat-foot small m0" id="statClaimsFoot"></p>
+          </div>
+        </article>
+        <article class="dashboard-stat-card dashboard-stat-accent-amber">
+          <span class="dashboard-stat-mark" aria-hidden="true">P</span>
+          <div>
+            <h4 class="dashboard-stat-heading m0">Pending review</h4>
+            <p class="dashboard-stat-value m0" id="pendingCount">—</p>
+            <p class="dashboard-stat-foot small m0" id="statPendingFoot"></p>
+          </div>
+        </article>
+        <article class="dashboard-stat-card dashboard-stat-accent-green">
+          <span class="dashboard-stat-mark" aria-hidden="true">A</span>
+          <div>
+            <h4 class="dashboard-stat-heading m0">Approved amount</h4>
+            <p class="dashboard-stat-value m0" id="approvedAmount">—</p>
+            <p class="dashboard-stat-foot small m0" id="statApprovedFoot"></p>
+          </div>
+        </article>
+      </section>
+
+      <section class="card dashboard-recent">
+        <div class="dashboard-recent-head">
+          <h3 class="m0">Recent claims</h3>
+          <p class="small m0 dashboard-recent-sub">Latest activity from your scope</p>
+        </div>
+        <div id="activityList" class="dashboard-activity-list"></div>
+      </section>
+    </main>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/dashboard.js"></script>

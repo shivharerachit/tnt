@@ -3,86 +3,133 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Users</title>
+  <title>ExpenseEase — Users</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
-  <main class="container">
-    <header class="top">
-      <div>
-        <h1 class="m0">Users</h1>
-        <p id="sessionLine" class="small m0"></p>
+<body class="with-sidebar">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">ExpenseEase</h2>
+      <p class="sidebar-tagline">Reimbursement portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+      <li><a href="users.html" data-page="users" id="navUsers">Users</a></li>
+      <li><a href="claims.html" data-page="claims">Claims</a></li>
+    </nav>
+    <div class="sidebar-footer">
+      <p id="sidebarUser" class="small m0"></p>
+      <div class="sidebar-footer-actions">
+        <a href="profile.html" class="sidebar-footer-link" data-page="profile">Profile</a>
+        <button type="button" id="logoutBtn" class="sidebar-footer-link sidebar-footer-link-logout">Logout</button>
       </div>
-      <div class="row">
-        <nav class="nav">
-          <a data-page="dashboard" href="dashboard.html">Dashboard</a>
-          <a id="navUsers" data-page="users" href="users.html">Users</a>
-          <a data-page="claims" href="claims.html">Claims</a>
-          <a id="navReviews" data-page="reviews" href="reviews.html">Reviews</a>
-          <a data-page="tracking" href="tracking.html">Tracking</a>
-        </nav>
-        <button id="logoutBtn" class="btn">Logout</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1>Users</h1>
       </div>
     </header>
 
-    <p id="msg" class="msg"></p>
+    <main class="container">
+      <div id="msg" class="msg hidden"></div>
 
-    <section class="grid-3">
-      <article class="card">
-        <h3>Create user</h3>
-        <form id="createForm">
-          <label>Name<input id="name" type="text" required /></label>
-          <label>Email<input id="email" type="email" required /></label>
-          <label>Password<input id="password" type="password" minlength="6" required /></label>
-          <label>Role
-            <select id="role" required>
-              <option value="">Select role</option>
-              <option value="ADMIN">Admin</option>
-              <option value="MANAGER">Manager</option>
-              <option value="EMPLOYEE">Employee</option>
-            </select>
-          </label>
-          <label>Manager<select id="managerId"><option value="">No manager</option></select></label>
-          <button class="btn btn-primary" type="submit">Save</button>
-        </form>
-      </article>
-
-      <article class="card">
-        <h3>Assign manager</h3>
-        <form id="assignForm">
-          <label>Employee<select id="employeeId" required></select></label>
-          <label>Manager<select id="assignManagerId" required></select></label>
-          <button class="btn btn-primary" type="submit">Assign</button>
-        </form>
-      </article>
-
-      <article class="card">
-        <h3>Team under manager</h3>
-        <form id="teamForm">
-          <label>Manager<select id="teamManagerId" required></select></label>
-          <button class="btn" type="submit">Load team</button>
-        </form>
-        <ul id="teamList"></ul>
-      </article>
-    </section>
-
-    <section class="card">
-      <div class="row">
-        <label style="min-width:220px">Filter by role
+      <!-- Toolbar with filters and actions -->
+      <div class="claims-toolbar">
+        <button class="btn btn-primary" id="newUserBtn">+ New User</button>
+        <div class="claims-filters">
+          <input type="text" id="searchInput" placeholder="Search by ID, name, or email" />
           <select id="filterRole">
-            <option value="ALL">All users</option>
+            <option value="">All roles</option>
             <option value="ADMIN">Admin</option>
             <option value="MANAGER">Manager</option>
             <option value="EMPLOYEE">Employee</option>
           </select>
-        </label>
+          <select id="filterManager">
+            <option value="">All managers</option>
+          </select>
+        </div>
       </div>
-      <table>
-        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Manager</th><th>Action</th></tr></thead>
-        <tbody id="usersBody"></tbody>
-      </table>
-    </section>
-  </main>
+
+      <section class="card">
+        <table class="claims-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="id">ID ↕</th>
+              <th class="sortable" data-sort="name">Name ↕</th>
+              <th class="sortable" data-sort="email">Email ↕</th>
+              <th class="sortable" data-sort="role">Role ↕</th>
+              <th>Manager</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </section>
+
+      <!-- Modal for creating a new user -->
+      <div class="modal-overlay" id="createUserModal" style="display:none;">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title m0">Create user</h2>
+              <p class="modal-subtitle">Add an employee, manager, or admin account.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('createUserModal')" aria-label="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <form id="createForm">
+              <label>Name<input id="name" type="text" minlength="2" maxlength="50" placeholder="Full name" required /></label>
+              <label>Email<input id="email" type="email" maxlength="254" placeholder="user@domain.com" autocomplete="off" required /></label>
+              <label>Password<input id="password" type="password" minlength="7" maxlength="100" placeholder="More than 6 characters" autocomplete="new-password" required /></label>
+              <p class="small form-hint m0">Password: any characters, more than 6 (max 100).</p>
+              <label>Role
+                <select id="role" required>
+                  <option value="">Select role</option>
+                  <option value="EMPLOYEE">Employee</option>
+                  <option value="MANAGER">Manager</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+              </label>
+              <label>Manager (for Employees)
+                <select id="managerId">
+                  <option value="">No manager</option>
+                </select>
+              </label>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeModal('createUserModal')">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal for viewing user details -->
+      <div class="modal-overlay" id="viewUserModal" style="display:none;">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title m0">User details</h2>
+              <p class="modal-subtitle">Account information from the directory.</p>
+            </div>
+            <button type="button" class="modal-close" onclick="closeModal('viewUserModal')" aria-label="Close">×</button>
+          </div>
+          <div class="modal-body">
+            <div id="userDetails"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn" onclick="closeModal('viewUserModal')">Close</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
   <script src="js/config.js"></script>
   <script src="js/common.js"></script>
   <script src="js/users.js"></script>

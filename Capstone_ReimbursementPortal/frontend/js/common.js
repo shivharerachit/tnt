@@ -1,102 +1,147 @@
 // COMMON HELPER FUNCTIONS
-// Reusable functions used across all pages
+// Clean, minimal implementations used by pages (setup, API calls, UI helpers)
 
-
-// SESSION MANAGEMENT
-
-// Try to load user session from localStorage
+// Load / save session
 function loadSession() {
-  var saved = localStorage.getItem("userSession");
-  if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch (error) {
-      return null;
-    }
+  let saved = localStorage.getItem('userSession');
+  if (!saved) return null;
+  try {
+    return JSON.parse(saved);
+  } catch (e) {
+    return null;
   }
-  return null;
 }
 
-// Save user session to localStorage
 function saveSession(sessionData) {
-  localStorage.setItem("userSession", JSON.stringify(sessionData));
+  localStorage.setItem('userSession', JSON.stringify(sessionData));
 }
 
-// Clear user session (when logging out)
 function clearSession() {
-  localStorage.removeItem("userSession");
-  window.location.href = "index.html";
+  localStorage.removeItem('userSession');
+  window.location.href = 'index.html';
 }
 
-// Check if user is logged in
 function isLoggedIn() {
-  var session = loadSession();
-  return session && session.userId;
+  let s = loadSession();
+  return s && s.userId;
 }
 
-// Get current user's role (ADMIN, MANAGER, EMPLOYEE, etc)
 function getUserRole() {
-  var session = loadSession();
-  if (session) {
-    return session.role;
-  }
-  return "";
+  let s = loadSession();
+  return s && s.role ? s.role : '';
 }
 
-// Redirect to dashboard if user is already logged in
+// Redirect to dashboard if already logged in (for login page)
 function redirectIfAlreadyLoggedIn() {
   if (isLoggedIn()) {
-    window.location.href = "dashboard.html";
+    window.location.href = 'dashboard.html';
   }
 }
 
-// Redirect to login if user is not logged in
+// Redirect to login if not logged in (for protected pages)
 function redirectIfNotLoggedIn() {
   if (!isLoggedIn()) {
-    localStorage.removeItem("userSession");
-    window.location.href = "index.html";
+    clearSession();
+    window.location.href = 'index.html';
   }
 }
 
-// API CALLS
+// Call this from pages to perform common setup tasks
+function setupPage(pageName) {
+  let session = loadSession();
 
-// Make a request to the backend API
-function callAPI(path, options) {
-  var method = options && options.method ? options.method : "GET";
-  var body = options && options.body ? options.body : null;
-  var url = CONFIG.BACKEND_URL + path;
+  // If not logged in, redirect to login for pages that expect auth
+  // (pages can perform their own checks too)
+  // Do not force redirect here to allow public pages
 
-  // Build request headers
-  var headers = {
-    "Content-Type": "application/json"
-  };
-
-  // Add user ID to header if logged in
-  var session = loadSession();
-  if (session && session.userId) {
-    headers["X-USER-ID"] = String(session.userId);
+  // Fill sidebar user info if present
+  let sidebarUser = document.getElementById('sidebarUser');
+  if (sidebarUser && session) {
+    sidebarUser.textContent = session.name + ' (' + session.role + ')';
   }
 
-  // Make the API call
+  // Fill session line if present (for backward compatibility)
+  let sessionLine = document.getElementById('sessionLine');
+  if (sessionLine && session) {
+    sessionLine.textContent = session.name + ' | ' + session.email + ' | ' + session.role;
+  }
+
+  // Highlight active navigation links (if they use data-page)
+  try {
+    let links = document.querySelectorAll('[data-page]');
+    for (let i = 0; i < links.length; i++) {
+      if (links[i].getAttribute('data-page') === pageName) {
+        links[i].classList.add('active');
+      } else {
+        links[i].classList.remove('active');
+      }
+    }
+  } catch (e) {}
+
+  // Show/hide Users link based on role
+  let usersLink = document.getElementById('navUsers');
+  if (usersLink) {
+    if (getUserRole() === 'ADMIN') usersLink.classList.remove('hidden');
+    else usersLink.classList.add('hidden');
+  }
+
+  // Wire up logout button
+  let logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function() {
+      clearSession();
+    });
+  }
+
+  // Modal overlay click-to-close behavior
+  document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+      }
+    });
+  });
+}
+
+// Simple API wrapper
+function callAPI(path, options) {
+  options = options || {};
+  let method = options.method || 'GET';
+  let body = options.body || null;
+  let url = CONFIG.BACKEND_URL + path;
+
+  let headers = options.headers || {};
+  if (!headers['Content-Type'] && !(body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+  // Include X-USER-ID header if user session exists (backend requires this)
+  try {
+    let sess = loadSession();
+    if (sess && sess.userId) {
+      headers['X-USER-ID'] = String(sess.userId);
+    }
+  } catch (e) {}
+
   return fetch(url, {
     method: method,
     headers: headers,
     body: body
   }).then(function(response) {
-    // Read the response as text
     return response.text().then(function(text) {
-      var data = null;
+      let data = null;
       if (text) {
         try {
           data = JSON.parse(text);
-        } catch (error) {
-          throw new Error("Invalid response from server");
+        } catch (e) {
+          // not JSON, return raw text
+          data = text;
         }
       }
 
-      // Check if there was an error
-      if (!response.ok || (data && data.success === false)) {
-        throw new Error(data && data.message ? data.message : "Request failed");
+      if (!response.ok) {
+        let msg = (data && data.message) ? data.message : ('Request failed: ' + response.status);
+        throw new Error(msg);
       }
 
       return data;
@@ -104,100 +149,110 @@ function callAPI(path, options) {
   });
 }
 
-// Extract data from API response (handles nested data)
+// Extract common response data
 function extractData(response) {
-  if (response && response.data) {
-    return response.data;
-  }
+  if (!response) return null;
+  if (response.data !== undefined) return response.data;
+  if (response.content !== undefined) return response;
   return response;
 }
 
-// UI HELPERS 
-
-// Display a message to the user (error or success)
+// UI helpers
 function showMessage(elementId, text, isError) {
-  var element = document.getElementById(elementId);
-  if (element) {
-    element.textContent = text;
-    if (isError) {
-      element.classList.add("error");
-    } else {
-      element.classList.remove("error");
-    }
+  let el = document.getElementById(elementId);
+  if (!el) return;
+  el.textContent = text;
+  el.classList.remove('hidden');
+  if (isError) {
+    el.classList.add('error');
+  } else {
+    el.classList.remove('error');
+  }
+  // Auto-hide after 4 seconds for non-error messages
+  if (!isError) {
+    setTimeout(function() { el.classList.add('hidden'); }, 4000);
   }
 }
 
-// Format a number as USD currency (e.g., $1,234.56)
-function formatMoney(amount) {
-  var num = Number(amount || 0);
-  return "$" + num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+function formatMoney(num) {
+  if (!num && num !== 0) return '₹0.00';
+  return '₹' + Number(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// Highlight the active page in navigation menu
-function highlightActivePage(pageName) {
-  var links = document.querySelectorAll(".nav a[data-page]");
-  var i;
-  for (i = 0; i < links.length; i++) {
-    if (links[i].getAttribute("data-page") === pageName) {
-      links[i].classList.add("active");
-    }
-  }
+// --- Client-side email & password checks (align with backend where possible) ---
+/* Strictly more than 6 characters → minimum length 7 */
+const VALIDATION_PASSWORD_MIN_CHARS = 7;
+const VALIDATION_PASSWORD_MAX = 100;
+
+/**
+ * Generic shape: one @, non-empty local part, domain with at least one dot (e.g. name@company.com).
+ * Does NOT check allowed domain — only the backend should do that.
+ */
+function isGenericEmailPattern(email) {
+  if (!email || typeof email !== 'string') return false;
+  let e = email.trim();
+  if (e.length < 5 || e.length > 254) return false;
+  if (/\s/.test(e)) return false;
+  let at = e.indexOf('@');
+  if (at < 1) return false;
+  if (e.indexOf('@', at + 1) !== -1) return false;
+  let local = e.slice(0, at);
+  let domain = e.slice(at + 1);
+  if (!domain.length) return false;
+  if (domain.indexOf('.') === -1) return false;
+  if (domain.charAt(0) === '.' || domain.charAt(domain.length - 1) === '.') return false;
+  return true;
 }
 
-// Show or hide navigation menu items based on user role
-function updateNavigationForRole() {
-  var role = getUserRole();
-  var usersLink = document.getElementById("navUsers");
-  var reviewsLink = document.getElementById("navReviews");
-
-  // Only ADMIN can see Users menu
-  if (usersLink) {
-    if (role === "ADMIN") {
-      usersLink.classList.remove("hidden");
-    } else {
-      usersLink.classList.add("hidden");
-    }
+/**
+ * Email format on the frontend; domain rules are backend-only.
+ * @returns {string|null} error message, or null if OK
+ */
+function validateEmail(email) {
+  if (email == null || String(email).trim() === '') {
+    return 'Please enter your email address.';
   }
-
-  // Only ADMIN and MANAGER can see Reviews menu
-  if (reviewsLink) {
-    if (role === "ADMIN" || role === "MANAGER") {
-      reviewsLink.classList.remove("hidden");
-    } else {
-      reviewsLink.classList.add("hidden");
-    }
+  let trimmed = String(email).trim();
+  if (!isGenericEmailPattern(trimmed)) {
+    return 'Please enter a valid email address (for example name@example.com).';
   }
+  return null;
 }
 
-// SHARED PAGE SETUP 
-
-// This function is called by every page to set up common elements
-function setupPage(activePage) {
-  var session = loadSession();
-
-  // Check if user is logged in
-  if (!session || !session.userId) {
-    window.location.href = "index.html";
-    return;
+/**
+ * Password: length only — more than 6 characters (7+), max 100. No letter/symbol rules.
+ */
+function validatePassword(password) {
+  if (password == null || typeof password !== 'string') {
+    return 'Please enter your password.';
   }
-
-  // Set logged-in user info in the header
-  var sessionLine = document.getElementById("sessionLine");
-  if (sessionLine) {
-    sessionLine.textContent = session.name + " | " + session.email + " | " + session.role;
+  if (password.length === 0) {
+    return 'Please enter your password.';
   }
-
-  // Highlight current page in navigation
-  highlightActivePage(activePage);
-
-  // Update navigation based on role
-  updateNavigationForRole();
-
-  // Set up logout button
-  var logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", function() {
-      clearSession();
-    });
+  if (password.length < VALIDATION_PASSWORD_MIN_CHARS) {
+    return 'Password must be more than 6 characters.';
   }
+  if (password.length > VALIDATION_PASSWORD_MAX) {
+    return (
+      'Password must be no more than ' +
+      VALIDATION_PASSWORD_MAX +
+      ' characters.'
+    );
+  }
+  return null;
+}
+
+// Modal helpers
+function openModal(id) {
+  let m = document.getElementById(id);
+  if (!m) return;
+  m.style.display = 'flex';
+  m.classList.add('active');
+}
+
+function closeModal(id) {
+  let m = document.getElementById(id);
+  if (!m) return;
+  m.style.display = 'none';
+  m.classList.remove('active');
 }

@@ -5,15 +5,15 @@
 setupPage("tracking");
 
 // Get HTML elements
-var messageBox = document.getElementById("msg");
-var resultSection = document.getElementById("result");
-var resubmitCard = document.getElementById("resubmitCard");
-var searchButton = document.getElementById("searchBtn");
-var searchInput = document.getElementById("searchId");
-var resubmitForm = document.getElementById("resubmitForm");
-var resubmitIdInput = document.getElementById("resubmitId");
-var resubmitAmountInput = document.getElementById("resubmitAmount");
-var resubmitDescriptionInput = document.getElementById("resubmitDescription");
+let messageBox = document.getElementById("msg");
+let resultSection = document.getElementById("result");
+let resubmitCard = document.getElementById("resubmitCard");
+let searchButton = document.getElementById("searchBtn");
+let searchInput = document.getElementById("searchId");
+let resubmitForm = document.getElementById("resubmitForm");
+let resubmitIdInput = document.getElementById("resubmitId");
+let resubmitAmountInput = document.getElementById("resubmitAmount");
+let resubmitDescriptionInput = document.getElementById("resubmitDescription");
 
 // Display claim details
 function displayClaim(claim) {
@@ -25,7 +25,7 @@ function displayClaim(claim) {
   }
 
   // Display claim info
-  var html = "" +
+  let html = "" +
     '<p><strong>Claim #:</strong> ' + claim.id + '</p>' +
     '<p><strong>Employee ID:</strong> ' + claim.employeeId + '</p>' +
     '<p><strong>Amount:</strong> ' + formatMoney(claim.amount) + '</p>' +
@@ -36,10 +36,10 @@ function displayClaim(claim) {
   resultSection.innerHTML = html;
 
   // Check if this is a rejected claim and if user can resubmit it
-  var session = loadSession();
-  var isUsersClaim = String(claim.employeeId) === String(session.userId);
-  var isRejected = claim.status === "REJECTED";
-  var isEmployee = getUserRole() === "EMPLOYEE";
+  let session = loadSession();
+  let isUsersClaim = String(claim.employeeId) === String(session.userId);
+  let isRejected = claim.status === "REJECTED";
+  let isEmployee = getUserRole() === "EMPLOYEE";
 
   if (isEmployee && isUsersClaim && isRejected) {
     // Show resubmit form
@@ -55,7 +55,7 @@ function displayClaim(claim) {
 
 // Search for a claim by ID
 searchButton.addEventListener("click", function() {
-  var claimId = Number(searchInput.value);
+  let claimId = Number(searchInput.value);
 
   if (!claimId) {
     showMessage("msg", "Enter claim id.", true);
@@ -63,9 +63,8 @@ searchButton.addEventListener("click", function() {
   }
 
   callAPI("/claims/" + claimId).then(function(response) {
-    var claim = extractData(response);
+    let claim = extractData(response);
     displayClaim(claim);
-    showMessage("msg", "Claim loaded.", false);
   }).catch(function(error) {
     showMessage("msg", error.message, true);
     displayClaim(null);
@@ -79,11 +78,11 @@ searchButton.addEventListener("click", function() {
 resubmitForm.addEventListener("submit", function(event) {
   event.preventDefault();
 
-  var claimId = resubmitIdInput.value;
-  var amount = Number(resubmitAmountInput.value);
-  var description = resubmitDescriptionInput.value.trim();
-  var claimLimit = CONFIG.CLAIM_LIMIT;
-  var session = loadSession();
+  let claimId = resubmitIdInput.value;
+  let amount = Number(resubmitAmountInput.value);
+  let description = resubmitDescriptionInput.value.trim();
+  let claimLimit = CONFIG.CLAIM_LIMIT;
+  let session = loadSession();
 
   // Check if amount is within limit
   if (amount > claimLimit) {

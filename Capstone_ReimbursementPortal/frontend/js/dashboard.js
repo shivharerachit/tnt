@@ -1,10 +1,11 @@
 /**
  * DASHBOARD — summary stats and recent claims.
  *
- * Uses non-paginated claim endpoints so totals match the whole dataset (not just page 1).
- * ADMIN: GET /users + GET /claims/all
- * MANAGER: GET /users/manager/{id} + GET /claims/reviewer
- * EMPLOYEE: GET /claims/user-claims (user count is always 1)
+ * Claim stats use paginated APIs + totalElements
+ * by the first page. Activity uses one small page.
+ * ADMIN: GET /users + GET /claims/all/paginated
+ * MANAGER: GET /users/manager/{id} + GET /claims/reviewer/paginated
+ * EMPLOYEE: GET /claims/my/paginated
  */
 
 setupPage("dashboard");
@@ -21,26 +22,26 @@ function getDashboardPaths() {
   let session = loadSession();
   let userId = session.userId;
 
-  if (role === "ADMIN") {
+  if (role === ROLE.ADMIN) {
     return {
       usersPath: "/users",
-      claimsPath: "/claims/all",
-      scope: "admin",
+      claimsPaginatedPath: "/claims/all/paginated",
+      scope: DASHBOARD_SCOPE.ADMIN,
     };
   }
 
-  if (role === "MANAGER") {
+  if (role === ROLE.MANAGER) {
     return {
       usersPath: "/users/manager/" + userId,
-      claimsPath: "/claims/reviewer",
-      scope: "manager",
+      claimsPaginatedPath: "/claims/reviewer/paginated",
+      scope: DASHBOARD_SCOPE.MANAGER,
     };
   }
 
   return {
     usersPath: null,
-    claimsPath: "/claims/user-claims",
-    scope: "employee",
+    claimsPaginatedPath: "/claims/my/paginated",
+    scope: DASHBOARD_SCOPE.EMPLOYEE,
   };
 }
 
@@ -51,7 +52,7 @@ function applyRoleCopy(scope) {
 
   greetingEl.textContent = "Welcome back, " + (session.name || "there");
 
-  if (scope === "admin") {
+  if (scope === DASHBOARD_SCOPE.ADMIN) {
     subEl.textContent =
       "Organization-wide view — all users and claims in the system.";
     document.getElementById("statUsersHeading").textContent = "Users";
@@ -60,7 +61,7 @@ function applyRoleCopy(scope) {
     document.getElementById("statPendingFoot").textContent = "Awaiting a decision";
     document.getElementById("statApprovedFoot").textContent = "Sum of approved claims";
     document.getElementById("statClaimsHeading").textContent = "Claims";
-  } else if (scope === "manager") {
+  } else if (scope === DASHBOARD_SCOPE.MANAGER) {
     subEl.textContent =
       "Your team and claims routed to you for review.";
     document.getElementById("statUsersHeading").textContent = "Team members";
@@ -90,6 +91,9 @@ function claimsArrayFromResponse(raw) {
   return [];
 }
 
+const DASHBOARD_ACTIVITY_SIZE = 6;
+const DASHBOARD_APPROVED_PAGE_SIZE = 100;
+
 function sortClaimsRecentFirst(list) {
   let copy = list.slice();
   copy.sort(function (a, b) {
@@ -98,26 +102,74 @@ function sortClaimsRecentFirst(list) {
   return copy;
 }
 
-function sumApprovedAmount(list) {
-  let total = 0;
-  let i;
-  for (i = 0; i < list.length; i++) {
-    if (list[i].status === "APPROVED") {
-      total += Number(list[i].amount) || 0;
-    }
+function claimsPageQuery(params) {
+  let page = params.page != null ? params.page : 0;
+  let size = params.size != null ? params.size : 10;
+  let parts = [];
+  parts.push("page=" + encodeURIComponent(String(page)));
+  parts.push("size=" + encodeURIComponent(String(size)));
+  parts.push("sort=" + encodeURIComponent("id,desc"));
+  if (params.claimStatus) {
+    parts.push(
+      "claimStatus=" + encodeURIComponent(String(params.claimStatus))
+    );
   }
-  return total;
+  return parts.join("&");
 }
 
-function countPending(list) {
-  let n = 0;
-  let i;
-  for (i = 0; i < list.length; i++) {
-    if (list[i].status === "SUBMITTED") {
-      n++;
-    }
+/**
+ * Total rows for this query (Spring page) or list length (legacy non-paged body).
+ */
+function totalElementsFromClaimsPayload(data) {
+  if (
+    data &&
+    typeof data === "object" &&
+    !Array.isArray(data) &&
+    typeof data.totalElements === "number" &&
+    !Number.isNaN(data.totalElements)
+  ) {
+    return data.totalElements;
   }
-  return n;
+  return claimsArrayFromResponse(data).length;
+}
+
+/**
+ * Sum approved amounts by walking APPROVED pages (server-filtered).
+ */
+function sumApprovedAmountPaged(basePath) {
+  let sum = 0;
+  let page = 0;
+
+  function fetchNext() {
+    let qs = claimsPageQuery({
+      page: page,
+      size: DASHBOARD_APPROVED_PAGE_SIZE,
+      claimStatus: CLAIM_STATUS.APPROVED,
+    });
+    return callAPI(basePath + "?" + qs)
+      .then(extractData)
+      .then(function (data) {
+        let list = claimsArrayFromResponse(data);
+        let i;
+        for (i = 0; i < list.length; i++) {
+          sum += Number(list[i].amount) || 0;
+        }
+        if (Array.isArray(data)) {
+          return sum;
+        }
+        let totalPages =
+          data && typeof data.totalPages === "number" && !Number.isNaN(data.totalPages)
+            ? data.totalPages
+            : 1;
+        page++;
+        if (list.length === 0 || page >= totalPages) {
+          return sum;
+        }
+        return fetchNext();
+      });
+  }
+
+  return fetchNext();
 }
 
 function renderActivityList(claims) {
@@ -174,34 +226,57 @@ function loadDashboard() {
     });
   }
 
-  let claimsPromise = callAPI(paths.claimsPath).then(function (response) {
-    return extractData(response);
-  });
+  let base = paths.claimsPaginatedPath;
 
-  Promise.all([usersPromise, claimsPromise])
+  let totalClaimsPromise = callAPI(
+    base + "?" + claimsPageQuery({ page: 0, size: 1 })
+  )
+    .then(extractData)
+    .then(totalElementsFromClaimsPayload);
+
+  let pendingTotalPromise = callAPI(
+    base +
+      "?" +
+      claimsPageQuery({
+        page: 0,
+        size: 1,
+        claimStatus: CLAIM_STATUS.SUBMITTED,
+      })
+  )
+    .then(extractData)
+    .then(totalElementsFromClaimsPayload);
+
+  let activityPromise = callAPI(
+    base +
+      "?" +
+      claimsPageQuery({ page: 0, size: DASHBOARD_ACTIVITY_SIZE })
+  ).then(extractData);
+
+  let approvedSumPromise = sumApprovedAmountPaged(base);
+
+  Promise.all([
+    usersPromise,
+    totalClaimsPromise,
+    pendingTotalPromise,
+    approvedSumPromise,
+    activityPromise,
+  ])
     .then(function (results) {
       let userCount = results[0];
-      let claimsRaw = results[1];
-      let claimsList = claimsArrayFromResponse(claimsRaw);
+      let totalClaims = results[1];
+      let pendingTotal = results[2];
+      let approvedSum = results[3];
+      let activityRaw = results[4];
+      let activityList = claimsArrayFromResponse(activityRaw);
 
       usersCountElement.textContent = String(userCount);
-      claimsCountElement.textContent = String(claimsList.length);
-      pendingCountElement.textContent = String(countPending(claimsList));
-      approvedAmountElement.textContent = formatMoney(
-        sumApprovedAmount(claimsList)
-      );
+      claimsCountElement.textContent = String(totalClaims);
+      pendingCountElement.textContent = String(pendingTotal);
+      approvedAmountElement.textContent = formatMoney(approvedSum);
 
-      renderActivityList(claimsList);
+      renderActivityList(activityList);
     })
-    .catch(function (error) {
-      showMessage("msg", error.message, true);
-      if (
-        error.message.indexOf("User not found") !== -1 ||
-        error.message.indexOf("Invalid") !== -1
-      ) {
-        clearSession();
-      }
-    });
+    .catch(handleAPIError);
 }
 
 loadDashboard();

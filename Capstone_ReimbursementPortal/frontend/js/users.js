@@ -6,7 +6,7 @@ setupPage("users");
 
 // Only admins can access this page
 let role = getUserRole();
-if (role !== "ADMIN") {
+if (role !== ROLE.ADMIN) {
   window.location.href = "dashboard.html";
 }
 
@@ -48,7 +48,7 @@ function populateManagerSelects(users) {
   // Separate users by role
   let i;
   for (i = 0; i < users.length; i++) {
-    if (users[i].role === "MANAGER" || users[i].role === "ADMIN") {
+    if (users[i].role === ROLE.MANAGER || users[i].role === ROLE.ADMIN) {
       managers.push(users[i]);
     }
   }
@@ -90,7 +90,7 @@ function displayUsers(users) {
     let user = users[i];
     // Build manager cell: for employees show a select, otherwise show manager name or '-'
     let managerCell = '-';
-    if (user.role === 'EMPLOYEE') {
+    if (user.role === ROLE.EMPLOYEE) {
       let opts = managerOptionsHTML || '<option value="">No manager</option>';
       // Build options but mark selected
       let optsSelected = '';
@@ -148,8 +148,8 @@ function displayUsers(users) {
       callAPI('/users/' + userId + '/assign-manager?managerId=' + managerId, { method: 'PUT' })
         .then(function() {
           loadUsers();
-        }).catch(function(error) {
-          showMessage('msg', error.message, true);
+        }).catch(function (error) {
+          handleAPIError(error, { skipSessionClear: true });
         });
     });
   }
@@ -167,12 +167,7 @@ function handleDeleteUser(userId) {
     method: "DELETE"
   }).then(function() {
     loadUsers();
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
-  });
+  }).catch(handleAPIError);
 }
 
 // Load users from API
@@ -182,12 +177,7 @@ function loadUsers() {
     allUsers = extractData(response) || [];
     populateManagerSelects(allUsers);
     renderUsers();
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
-  });
+  }).catch(handleAPIError);
 }
 
 // Build filtered and sorted list and display
@@ -312,7 +302,7 @@ createForm.addEventListener("submit", function(event) {
   };
 
   // Only set managerId for employees who have a manager
-  if (role === "EMPLOYEE" && managerId) {
+  if (role === ROLE.EMPLOYEE && managerId) {
     userData.managerId = Number(managerId);
   }
 
@@ -324,12 +314,7 @@ createForm.addEventListener("submit", function(event) {
     createForm.reset();
     closeModal('createUserModal');
     loadUsers();
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
-  });
+  }).catch(handleAPIError);
 });
 
 // View user details

@@ -1,7 +1,6 @@
 // COMMON HELPER FUNCTIONS
 // Clean, minimal implementations used by pages (setup, API calls, UI helpers)
 
-// Load / save session
 function loadSession() {
   let saved = localStorage.getItem('userSession');
   if (!saved) return null;
@@ -31,14 +30,12 @@ function getUserRole() {
   return s && s.role ? s.role : '';
 }
 
-// Redirect to dashboard if already logged in (for login page)
 function redirectIfAlreadyLoggedIn() {
   if (isLoggedIn()) {
     window.location.href = 'dashboard.html';
   }
 }
 
-// Redirect to login if not logged in (for protected pages)
 function redirectIfNotLoggedIn() {
   if (!isLoggedIn()) {
     clearSession();
@@ -50,20 +47,13 @@ function redirectIfNotLoggedIn() {
 function setupPage(pageName) {
   let session = loadSession();
 
-  // If not logged in, redirect to login for pages that expect auth
-  // (pages can perform their own checks too)
-  // Do not force redirect here to allow public pages
+  // If not logged in, redirect to log in for pages that expect auth
+  redirectIfNotLoggedIn();
 
   // Fill sidebar user info if present
   let sidebarUser = document.getElementById('sidebarUser');
   if (sidebarUser && session) {
     sidebarUser.textContent = session.name + ' (' + session.role + ')';
-  }
-
-  // Fill session line if present (for backward compatibility)
-  let sessionLine = document.getElementById('sessionLine');
-  if (sessionLine && session) {
-    sessionLine.textContent = session.name + ' | ' + session.email + ' | ' + session.role;
   }
 
   // Highlight active navigation links (if they use data-page)
@@ -81,7 +71,7 @@ function setupPage(pageName) {
   // Show/hide Users link based on role
   let usersLink = document.getElementById('navUsers');
   if (usersLink) {
-    if (getUserRole() === 'ADMIN') usersLink.classList.remove('hidden');
+    if (getUserRole() === ROLE.ADMIN) usersLink.classList.remove('hidden');
     else usersLink.classList.add('hidden');
   }
 
@@ -102,6 +92,50 @@ function setupPage(pageName) {
       }
     });
   });
+}
+
+function extractHttpErrorMessage(response, rawText, parsedData) {
+  let data = parsedData;
+  if (data && typeof data === 'object') {
+    if (typeof data.message === 'string' && data.message.trim()) {
+      return data.message;
+    }
+    if (typeof data.error === 'string' && data.error.trim()) {
+      return data.error;
+    }
+    if (typeof data.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+    if (typeof data.title === 'string' && data.title.trim()) {
+      return data.title;
+    }
+  }
+
+  function looksLikeHtml(s) {
+    if (!s || typeof s !== 'string') return false;
+    let t = s.trim();
+    return /^<!DOCTYPE/i.test(t) || /<html[\s>]/i.test(t);
+  }
+
+  function truncate(s, maxLen) {
+    maxLen = maxLen || 500;
+    if (!s || s.length <= maxLen) return s;
+    return s.slice(0, maxLen) + '…';
+  }
+
+  if (typeof data === 'string') {
+    let t = data.trim();
+    if (t.length && !looksLikeHtml(t)) {
+      return truncate(t);
+    }
+  }
+  if (typeof rawText === 'string') {
+    let t = rawText.trim();
+    if (t.length && !looksLikeHtml(t)) {
+      return truncate(t);
+    }
+  }
+  return 'Request failed: ' + response.status;
 }
 
 // Simple API wrapper
@@ -134,14 +168,12 @@ function callAPI(path, options) {
         try {
           data = JSON.parse(text);
         } catch (e) {
-          // not JSON, return raw text
           data = text;
         }
       }
 
       if (!response.ok) {
-        let msg = (data && data.message) ? data.message : ('Request failed: ' + response.status);
-        throw new Error(msg);
+        throw new Error(extractHttpErrorMessage(response, text, data));
       }
 
       return data;
@@ -149,11 +181,42 @@ function callAPI(path, options) {
   });
 }
 
+/**
+ * Spring Data {@code PageSerializationMode.VIA_DTO} serializes pages as
+ * {@code { content, page: { size, number, totalElements, totalPages } }}.
+ * Flatten to the older PageImpl-style fields our UI expects.
+ */
+function normalizeSpringPagedModel(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return data;
+  }
+  if (
+    data.content !== undefined &&
+    data.page !== undefined &&
+    typeof data.page === 'object'
+  ) {
+    let p = data.page;
+    return {
+      content: data.content,
+      totalPages: Number(p.totalPages),
+      number: Number(p.number),
+      size: p.size !== undefined ? Number(p.size) : undefined,
+      totalElements:
+        p.totalElements !== undefined ? Number(p.totalElements) : undefined,
+    };
+  }
+  return data;
+}
+
 // Extract common response data
 function extractData(response) {
   if (!response) return null;
-  if (response.data !== undefined) return response.data;
-  if (response.content !== undefined) return response;
+  if (response.data !== undefined) {
+    return normalizeSpringPagedModel(response.data);
+  }
+  if (response.content !== undefined) {
+    return normalizeSpringPagedModel(response);
+  }
   return response;
 }
 
@@ -171,6 +234,33 @@ function showMessage(elementId, text, isError) {
   // Auto-hide after 4 seconds for non-error messages
   if (!isError) {
     setTimeout(function() { el.classList.add('hidden'); }, 4000);
+  }
+}
+
+/**
+ * Shared API promise rejection handler: show message, optional follow-up, clear session on auth-style errors.
+ * @param {Error} error
+ * @param {{ onAfterMessage?: function(Error): void, skipSessionClear?: boolean }} [options]
+ */
+function handleAPIError(error, options) {
+  options = options || {};
+  let msg =
+    error && typeof error.message === 'string'
+      ? error.message
+      : error != null
+        ? String(error)
+        : 'Request failed';
+  showMessage('msg', msg, true);
+  if (typeof options.onAfterMessage === 'function') {
+    options.onAfterMessage(error);
+  }
+  if (!options.skipSessionClear) {
+    if (
+      msg.indexOf('User not found') !== -1 ||
+      msg.indexOf('Invalid') !== -1
+    ) {
+      clearSession();
+    }
   }
 }
 

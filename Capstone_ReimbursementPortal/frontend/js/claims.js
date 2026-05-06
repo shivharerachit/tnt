@@ -30,10 +30,10 @@ let sortAsc = false;
 function getClaimsPath() {
   let role = getUserRole();
 
-  if (role === "ADMIN") {
+  if (role === ROLE.ADMIN) {
     return "/claims/all/paginated";
   }
-  if (role === "MANAGER") {
+  if (role === ROLE.MANAGER) {
     return "/claims/reviewer/paginated";
   }
   return "/claims/my/paginated";
@@ -43,10 +43,10 @@ function getUsersPath() {
   let role = getUserRole();
   let session = loadSession();
 
-  if (role === "ADMIN") {
+  if (role === ROLE.ADMIN) {
     return "/users";
   }
-  if (role === "MANAGER") {
+  if (role === ROLE.MANAGER) {
     return "/users/manager/" + session.userId;
   }
   return null;
@@ -100,7 +100,8 @@ function buildActionButtonsHtml(claim, role) {
     '" data-action="view">View</button>';
 
   let canReview =
-    (role === "MANAGER" || role === "ADMIN") && claim.status === "SUBMITTED";
+    (role === ROLE.MANAGER || role === ROLE.ADMIN) &&
+    claim.status === CLAIM_STATUS.SUBMITTED;
   if (canReview) {
     html +=
       '<button type="button" class="btn btn-review btn-sm" data-claim-id="' +
@@ -108,7 +109,7 @@ function buildActionButtonsHtml(claim, role) {
       '" data-action="review">Review</button>';
   }
 
-  if (role === "ADMIN") {
+  if (role === ROLE.ADMIN) {
     html +=
       '<button type="button" class="btn btn-outline-danger btn-sm" data-claim-id="' +
       claim.id +
@@ -195,15 +196,7 @@ function loadClaims() {
         displayClaims([]);
       }
     })
-    .catch(function (error) {
-      showMessage("msg", error.message, true);
-      if (
-        error.message.indexOf("User not found") !== -1 ||
-        error.message.indexOf("Invalid") !== -1
-      ) {
-        clearSession();
-      }
-    });
+    .catch(handleAPIError);
 }
 
 function handleDeleteClaim(claimId) {
@@ -219,15 +212,7 @@ function handleDeleteClaim(claimId) {
       showMessage("msg", "Claim deleted.", false);
       loadClaims();
     })
-    .catch(function (error) {
-      showMessage("msg", error.message, true);
-      if (
-        error.message.indexOf("User not found") !== -1 ||
-        error.message.indexOf("Invalid") !== -1
-      ) {
-        clearSession();
-      }
-    });
+    .catch(handleAPIError);
 }
 
 function renderClaimDetailHtml(claim) {
@@ -278,15 +263,7 @@ function handleViewClaim(claimId) {
         renderClaimDetailHtml(claim);
       openModal("viewClaimModal");
     })
-    .catch(function (error) {
-      showMessage("msg", error.message, true);
-      if (
-        error.message.indexOf("User not found") !== -1 ||
-        error.message.indexOf("Invalid") !== -1
-      ) {
-        clearSession();
-      }
-    });
+    .catch(handleAPIError);
 }
 
 function handleSubmitReview(claimId) {
@@ -309,15 +286,7 @@ function handleSubmitReview(claimId) {
       document.getElementById("reviewClaimId").value = claimId;
       openModal("submitReviewModal");
     })
-    .catch(function (error) {
-      showMessage("msg", error.message, true);
-      if (
-        error.message.indexOf("User not found") !== -1 ||
-        error.message.indexOf("Invalid") !== -1
-      ) {
-        clearSession();
-      }
-    });
+    .catch(handleAPIError);
 }
 
 function submitReview() {
@@ -389,7 +358,7 @@ for (let h = 0; h < sortableHeaders.length; h++) {
 }
 
 let role = getUserRole();
-if (role === "EMPLOYEE") {
+if (role === ROLE.EMPLOYEE) {
   submitClaimBtn.style.display = "block";
 
   let session = loadSession();
@@ -469,15 +438,7 @@ if (role === "EMPLOYEE") {
         loadClaims();
         showMessage("msg", "Claim submitted successfully.", false);
       })
-      .catch(function (error) {
-        showMessage("msg", error.message, true);
-        if (
-          error.message.indexOf("User not found") !== -1 ||
-          error.message.indexOf("Invalid") !== -1
-        ) {
-          clearSession();
-        }
-      });
+      .catch(handleAPIError);
   });
 }
 
@@ -505,7 +466,7 @@ if (reviewForm) {
     }
 
     let endpoint =
-      decision === "APPROVED"
+      decision === CLAIM_STATUS.APPROVED
         ? "/claims/" + claimId + "/approve"
         : "/claims/" + claimId + "/reject";
 
@@ -518,15 +479,7 @@ if (reviewForm) {
         loadClaims();
         showMessage("msg", "Review submitted successfully.", false);
       })
-      .catch(function (error) {
-        showMessage("msg", error.message, true);
-        if (
-          error.message.indexOf("User not found") !== -1 ||
-          error.message.indexOf("Invalid") !== -1
-        ) {
-          clearSession();
-        }
-      });
+      .catch(handleAPIError);
   });
 }
 

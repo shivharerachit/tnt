@@ -38,8 +38,8 @@ function displayClaim(claim) {
   // Check if this is a rejected claim and if user can resubmit it
   let session = loadSession();
   let isUsersClaim = String(claim.employeeId) === String(session.userId);
-  let isRejected = claim.status === "REJECTED";
-  let isEmployee = getUserRole() === "EMPLOYEE";
+  let isRejected = claim.status === CLAIM_STATUS.REJECTED;
+  let isEmployee = getUserRole() === ROLE.EMPLOYEE;
 
   if (isEmployee && isUsersClaim && isRejected) {
     // Show resubmit form
@@ -65,12 +65,12 @@ searchButton.addEventListener("click", function() {
   callAPI("/claims/" + claimId).then(function(response) {
     let claim = extractData(response);
     displayClaim(claim);
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    displayClaim(null);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
+  }).catch(function (error) {
+    handleAPIError(error, {
+      onAfterMessage: function () {
+        displayClaim(null);
+      },
+    });
   });
 });
 
@@ -102,10 +102,5 @@ resubmitForm.addEventListener("submit", function(event) {
     resubmitForm.reset();
     resubmitCard.classList.add("hidden");
     showMessage("msg", "Claim resubmitted.", false);
-  }).catch(function(error) {
-    showMessage("msg", error.message, true);
-    if (error.message.indexOf("User not found") !== -1 || error.message.indexOf("Invalid") !== -1) {
-      clearSession();
-    }
-  });
+  }).catch(handleAPIError);
 });

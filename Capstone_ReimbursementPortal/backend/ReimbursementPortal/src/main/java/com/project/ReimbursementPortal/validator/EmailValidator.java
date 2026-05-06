@@ -14,7 +14,9 @@ public class EmailValidator {
     /**
      * @param domain from {@code app.allowed-email-domain} config
      */
-    public EmailValidator(final @Value("${app.allowed-email-domain}") String domain) {
+    public EmailValidator(
+            @Value("${app.allowed-email-domain}")
+            final String domain) {
         this.allowedDomain = domain;
     }
 

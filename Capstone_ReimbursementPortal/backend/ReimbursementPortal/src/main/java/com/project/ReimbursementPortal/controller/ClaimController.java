@@ -7,8 +7,7 @@ import com.project.ReimbursementPortal.enums.ClaimStatus;
 import com.project.ReimbursementPortal.exception.BadRequestException;
 import com.project.ReimbursementPortal.service.ClaimService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.RestController;
@@ -26,9 +25,9 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/claims")
+@Slf4j
 public class ClaimController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClaimController.class);
 
     /**
      * Service for handling claim-related business logic.
@@ -84,11 +83,11 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("POST /claims submit callerUserId={}", userId);
+        log.info("POST /claims submit callerUserId={}", userId);
 
         ClaimResponseDto res = claimService.submitClaim(req, userId);
 
-        LOGGER.info("POST /claims success callerUserId={} claimId={}", userId, res.getId());
+        log.info("POST /claims success callerUserId={} claimId={}", userId, res.getId());
 
         return new StandardResponseDto<>(true, "Claim submitted successfully", res);
     }
@@ -103,7 +102,7 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /claims/user-claims callerUserId={}", userId);
+        log.info("GET /claims/user-claims callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -127,7 +126,7 @@ public class ClaimController {
         Long userId = getUserId(userIdHeader);
         ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
 
-        LOGGER.info(
+        log.info(
                 "GET /claims/my/paginated callerUserId={} claimStatusFilter={} page={} size={}",
                 userId,
                 status,
@@ -151,7 +150,7 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /claims/reviewer callerUserId={}", userId);
+        log.info("GET /claims/reviewer callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -175,7 +174,7 @@ public class ClaimController {
         Long userId = getUserId(userIdHeader);
         ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
 
-        LOGGER.info(
+        log.info(
                 "GET /claims/reviewer/paginated callerUserId={} claimStatusFilter={} page={} size={}",
                 userId,
                 status,
@@ -205,7 +204,7 @@ public class ClaimController {
 
         ClaimResponseDto res = claimService.approveClaim(claimId, userId, comments);
 
-        LOGGER.info("PUT /claims/{}/approve success reviewerUserId={}", claimId, userId);
+        log.info("PUT /claims/{}/approve success reviewerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(true, "Claim approved", res);
     }
@@ -224,11 +223,11 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("PUT /claims/{}/reject reviewerUserId={}", claimId, userId);
+        log.info("PUT /claims/{}/reject reviewerUserId={}", claimId, userId);
 
         ClaimResponseDto res = claimService.rejectClaim(claimId, userId, comments);
 
-        LOGGER.info("PUT /claims/{}/reject success reviewerUserId={}", claimId, userId);
+        log.info("PUT /claims/{}/reject success reviewerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(true, "Claim rejected", res);
     }
@@ -247,11 +246,11 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("PUT /claims/{} resubmit callerUserId={}", claimId, userId);
+        log.info("PUT /claims/{} resubmit callerUserId={}", claimId, userId);
 
         ClaimResponseDto res = claimService.editAndResubmitClaim(claimId, req, userId);
 
-        LOGGER.info("PUT /claims/{} resubmit success callerUserId={}", claimId, userId);
+        log.info("PUT /claims/{} resubmit success callerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(true, "Claim resubmitted successfully", res);
     }
@@ -268,7 +267,7 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /claims/{} callerUserId={}", claimId, userId);
+        log.info("GET /claims/{} callerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -287,7 +286,7 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /claims/all callerUserId={}", userId);
+        log.info("GET /claims/all callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -311,7 +310,7 @@ public class ClaimController {
         Long userId = getUserId(userIdHeader);
         ClaimStatus status = parseClaimStatusFilter(claimStatusFilter);
 
-        LOGGER.info(
+        log.info(
                 "GET /claims/all/paginated callerUserId={} claimStatusFilter={} page={} size={}",
                 userId,
                 status,
@@ -337,11 +336,11 @@ public class ClaimController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("DELETE /claims/{} callerUserId={}", claimId, userId);
+        log.info("DELETE /claims/{} callerUserId={}", claimId, userId);
 
         claimService.deleteClaim(claimId, userId);
 
-        LOGGER.info("DELETE /claims/{} success callerUserId={}", claimId, userId);
+        log.info("DELETE /claims/{} success callerUserId={}", claimId, userId);
 
         return new StandardResponseDto<>(
                 true,

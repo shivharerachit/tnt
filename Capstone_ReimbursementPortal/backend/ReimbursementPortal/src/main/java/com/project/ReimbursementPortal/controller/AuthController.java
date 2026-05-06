@@ -7,8 +7,7 @@ import com.project.ReimbursementPortal.service.AuthService;
 
 import jakarta.validation.Valid;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,12 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthController {
-
-    /**
-     * Logger for logging authentication events.
-     */
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthController.class);
 
     /**
      * Service for handling authentication logic, such as verifying user credentials and generating response data.
@@ -43,11 +38,11 @@ public class AuthController {
     public StandardResponseDto<AuthResponseDto> login(
             final @Valid @RequestBody AuthRequestDto request) {
 
-        LOGGER.info("POST /auth/login email={}", request.getEmail());
+        log.info("POST /auth/login email={}", request.getEmail());
 
         AuthResponseDto response = authService.login(request);
 
-        LOGGER.info("POST /auth/login success email={}", request.getEmail());
+        log.info("POST /auth/login success email={}", request.getEmail());
 
         return new StandardResponseDto<>(
                 true,

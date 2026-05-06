@@ -8,8 +8,7 @@ import com.project.ReimbursementPortal.enums.UserRole;
 import com.project.ReimbursementPortal.exception.BadRequestException;
 import com.project.ReimbursementPortal.service.UserService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,9 +25,8 @@ import java.util.Objects;
 
 @RestController
 @RequestMapping("/users")
+@Slf4j
 public class UserController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
 
     /**
      * Service layer for handling user-related business logic.
@@ -69,11 +67,11 @@ public class UserController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("POST /users callerUserId={}", userId);
+        log.info("POST /users callerUserId={}", userId);
 
         UserResponseDto res = userService.createUser(req, userId);
 
-        LOGGER.info("POST /users success callerUserId={} createdUserId={}", userId, res.getId());
+        log.info("POST /users success callerUserId={} createdUserId={}", userId, res.getId());
 
         return new StandardResponseDto<>(true, "User created successfully", res);
     }
@@ -90,7 +88,7 @@ public class UserController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /users callerUserId={}", userId);
+        log.info("GET /users callerUserId={}", userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -113,7 +111,7 @@ public class UserController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /users/by-role callerUserId={} role={}", userId, roleParam);
+        log.info("GET /users/by-role callerUserId={} role={}", userId, roleParam);
 
         return new StandardResponseDto<>(
                 true,
@@ -138,7 +136,7 @@ public class UserController {
 
         Long currentUserId = getUserId(userIdHeader);
 
-        LOGGER.info(
+        log.info(
                 "PUT /users/{}/assign-manager callerUserId={} managerId={}",
                 userId,
                 currentUserId,
@@ -165,11 +163,11 @@ public class UserController {
 
         Long currentUserId = getUserId(userIdHeader);
 
-        LOGGER.info("DELETE /users/{} callerUserId={}", userId, currentUserId);
+        log.info("DELETE /users/{} callerUserId={}", userId, currentUserId);
 
         userService.deleteUser(userId, currentUserId);
 
-        LOGGER.info("DELETE /users/{} success callerUserId={}", userId, currentUserId);
+        log.info("DELETE /users/{} success callerUserId={}", userId, currentUserId);
 
         return new StandardResponseDto<>(true, "User deleted", null);
     }
@@ -188,7 +186,7 @@ public class UserController {
 
         Long userId = getUserId(userIdHeader);
 
-        LOGGER.info("GET /users/manager/{} callerUserId={}", managerId, userId);
+        log.info("GET /users/manager/{} callerUserId={}", managerId, userId);
 
         return new StandardResponseDto<>(
                 true,
@@ -216,11 +214,11 @@ public class UserController {
             throw new BadRequestException("You can only change your own password");
         }
 
-        LOGGER.info("PUT /users/{}/change-password", userId);
+        log.info("PUT /users/{}/change-password", userId);
 
         UserResponseDto updated = userService.changePassword(currentUserId, req);
 
-        LOGGER.info("PUT /users/{}/change-password success", userId);
+        log.info("PUT /users/{}/change-password success", userId);
 
         return new StandardResponseDto<>(
                 true,

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ExpenseEase — Profile</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="with-sidebar">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2 class="sidebar-title">ExpenseEase</h2>
+      <p class="sidebar-tagline">Reimbursement portal</p>
+    </div>
+    <nav class="sidebar-nav">
+      <li><a href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+      <li><a href="users.html" data-page="users" id="navUsers">Users</a></li>
+      <li><a href="claims.html" data-page="claims">Claims</a></li>
+    </nav>
+    <div class="sidebar-footer">
+      <p id="sidebarUser" class="small m0"></p>
+      <div class="sidebar-footer-actions">
+        <a href="profile.html" class="sidebar-footer-link" data-page="profile">Profile</a>
+        <button type="button" id="logoutBtn" class="sidebar-footer-link sidebar-footer-link-logout">Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-wrapper">
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h1>Profile</h1>
+      </div>
+    </header>
+
+    <main class="container">
+      <div id="msg" class="msg hidden"></div>
+
+      <div class="grid">
+        <div class="card">
+          <h3 class="m0">Your account</h3>
+          <p class="small profile-intro">These details are read-only. You can update your password using the form beside this card.</p>
+          <div class="claim-details-grid profile-section-gap">
+            <div><strong>User ID:</strong> <span id="infoUserId"></span></div>
+            <div><strong>Name:</strong> <span id="infoName"></span></div>
+            <div><strong>Email:</strong> <span id="infoEmail"></span></div>
+            <div><strong>Role:</strong> <span id="infoRole"></span></div>
+            <div><strong>Member since:</strong> <span id="infoDate"></span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="m0">Change password</h3>
+          <p class="small profile-intro">Your sign-in password is the only field you can change here.</p>
+          <form id="passwordForm" class="profile-section-gap">
+            <label>Current password
+              <input id="currentPassword" type="password" required autocomplete="current-password" />
+            </label>
+            <label>New password
+              <input id="newPassword" type="password" minlength="7" maxlength="100" required autocomplete="new-password" placeholder="More than 6 characters" />
+            </label>
+            <label>Confirm new password
+              <input id="confirmPassword" type="password" minlength="7" maxlength="100" required autocomplete="new-password" />
+            </label>
+            <p class="small form-hint m0">Any characters allowed; more than 6 and up to 100 characters.</p>
+            <button class="btn btn-primary" type="submit">Change password</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/profile.js"></script>
+</body>
+</html>

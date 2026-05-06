@@ -2,3 +2,6 @@
 *.pdf
 **/Files
 **/Docs
+ReimbursementPortalxxx
+.env.local
+.idea

@@ -116,8 +116,8 @@ function displayUsers(users) {
       '<td>' + user.role + '</td>' +
       '<td>' + managerCell + '</td>' +
       '<td>' +
-        '<button class="btn btn-secondary btn-sm" data-user-id="' + user.id + '" data-action="view" type="button">View</button> ' +
-        '<button class="btn btn-danger btn-sm" data-user-id="' + user.id + '" data-action="delete" type="button">Delete</button>' +
+      '<button class="btn btn-secondary btn-sm" data-user-id="' + user.id + '" data-action="view" type="button">View</button> ' +
+      '<button class="btn btn-danger btn-sm" data-user-id="' + user.id + '" data-action="delete" type="button">Delete</button>' +
       '</td>' +
       '</tr>';
   }
@@ -128,7 +128,7 @@ function displayUsers(users) {
   // Add click handlers to action buttons
   let actionButtons = document.querySelectorAll("button[data-user-id]");
   for (let j = 0; j < actionButtons.length; j++) {
-    actionButtons[j].addEventListener("click", function() {
+    actionButtons[j].addEventListener("click", function () {
       let userId = this.getAttribute("data-user-id");
       let action = this.getAttribute("data-action");
       if (action === "delete") {
@@ -142,15 +142,13 @@ function displayUsers(users) {
   // Add change handlers to inline manager selects
   let managerSelects = document.querySelectorAll('.manager-select');
   for (let k = 0; k < managerSelects.length; k++) {
-    managerSelects[k].addEventListener('change', function() {
+    managerSelects[k].addEventListener('change', function () {
       let userId = this.getAttribute('data-user-id');
       let managerId = this.value;
       callAPI('/users/' + userId + '/assign-manager?managerId=' + managerId, { method: 'PUT' })
-        .then(function() {
+        .then(function () {
           loadUsers();
-        }).catch(function (error) {
-          handleAPIError(error, { skipSessionClear: true });
-        });
+        }).catch(handleAPIError);
     });
   }
 }
@@ -165,7 +163,7 @@ function handleDeleteUser(userId) {
 
   callAPI("/users/" + userId, {
     method: "DELETE"
-  }).then(function() {
+  }).then(function () {
     loadUsers();
   }).catch(handleAPIError);
 }
@@ -173,7 +171,7 @@ function handleDeleteUser(userId) {
 // Load users from API
 function loadUsers() {
   // Load all users (we will filter/sort client-side)
-  callAPI("/users").then(function(response) {
+  callAPI("/users").then(function (response) {
     allUsers = extractData(response) || [];
     populateManagerSelects(allUsers);
     renderUsers();
@@ -187,26 +185,26 @@ function renderUsers() {
   // Role filter
   let roleVal = filterRoleSelect ? filterRoleSelect.value : '';
   if (roleVal) {
-    filtered = filtered.filter(function(u) { return u.role === roleVal; });
+    filtered = filtered.filter(function (u) { return u.role === roleVal; });
   }
 
   // Manager filter (show employees under a manager)
   if (filterManagerSelect && filterManagerSelect.value) {
     let mid = filterManagerSelect.value;
-    filtered = filtered.filter(function(u) { return String(u.managerId) === String(mid); });
+    filtered = filtered.filter(function (u) { return String(u.managerId) === String(mid); });
   }
 
   // Search filter
   if (searchInput && searchInput.value.trim() !== '') {
     let q = searchInput.value.trim().toLowerCase();
-    filtered = filtered.filter(function(u) {
+    filtered = filtered.filter(function (u) {
       return String(u.id).indexOf(q) !== -1 || (u.name && u.name.toLowerCase().indexOf(q) !== -1) || (u.email && u.email.toLowerCase().indexOf(q) !== -1);
     });
   }
 
   // Sorting
   if (sortColumn) {
-    filtered.sort(function(a, b) {
+    filtered.sort(function (a, b) {
       let va = a[sortColumn] || '';
       let vb = b[sortColumn] || '';
       // numeric sort for id
@@ -226,28 +224,28 @@ function renderUsers() {
 
 // Handle role filter change
 if (filterRoleSelect) {
-  filterRoleSelect.addEventListener("change", function() {
+  filterRoleSelect.addEventListener("change", function () {
     renderUsers();
   });
 }
 
 // Search input
 if (searchInput) {
-  searchInput.addEventListener('input', function() {
+  searchInput.addEventListener('input', function () {
     renderUsers();
   });
 }
 
 // Manager filter
 if (filterManagerSelect) {
-  filterManagerSelect.addEventListener('change', function() {
+  filterManagerSelect.addEventListener('change', function () {
     renderUsers();
   });
 }
 
 // Sortable table headers
-document.querySelectorAll('th.sortable').forEach(function(th) {
-  th.addEventListener('click', function() {
+document.querySelectorAll('th.sortable').forEach(function (th) {
+  th.addEventListener('click', function () {
     let col = th.getAttribute('data-sort');
     if (sortColumn === col) {
       sortAsc = !sortAsc;
@@ -261,7 +259,7 @@ document.querySelectorAll('th.sortable').forEach(function(th) {
 
 // Handle new user button click (if present)
 if (newUserBtn) {
-  newUserBtn.addEventListener("click", function() {
+  newUserBtn.addEventListener("click", function () {
     openModal('createUserModal');
   });
 }
@@ -272,7 +270,7 @@ function createUser() {
 }
 
 // Handle create user form submission
-createForm.addEventListener("submit", function(event) {
+createForm.addEventListener("submit", function (event) {
   event.preventDefault();
 
   let email = document.getElementById("email").value.trim();
@@ -310,7 +308,7 @@ createForm.addEventListener("submit", function(event) {
   callAPI("/users", {
     method: "POST",
     body: JSON.stringify(userData)
-  }).then(function() {
+  }).then(function () {
     createForm.reset();
     closeModal('createUserModal');
     loadUsers();
@@ -319,7 +317,7 @@ createForm.addEventListener("submit", function(event) {
 
 // View user details
 function viewUserDetails(userId) {
-  let user = allUsers.find(function(u) { return String(u.id) === String(userId); });
+  let user = allUsers.find(function (u) { return String(u.id) === String(userId); });
   if (!user) {
     showMessage("msg", "User not found.", true);
     return;

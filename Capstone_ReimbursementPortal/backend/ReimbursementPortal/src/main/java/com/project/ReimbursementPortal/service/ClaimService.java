@@ -125,50 +125,6 @@ public final class ClaimService {
         throw new ForbiddenException("Not authorized");
     }
 
-    /**
-     * Only REJECTED rows, owner EMPLOYEE.
-     *
-     * @param claimId row
-     * @param req patched fields
-     * @param currentUserId caller
-     * @return reopened SUBMITTED claim
-     */
-    public ClaimResponseDto editAndResubmitClaim(final Long claimId,
-                                                 final ClaimRequestDto req,
-                                                 final Long currentUserId) {
-
-        User currentUser = getUser(currentUserId);
-
-        if (currentUser.getRole() != UserRole.EMPLOYEE) {
-            throw new ForbiddenException("Only EMPLOYEE can edit and resubmit claims");
-        }
-
-        if (!currentUser.getId().equals(req.getEmployeeId())) {
-            throw new ForbiddenException("You can only edit and resubmit your own claims");
-        }
-
-        Claim claim = getClaim(claimId);
-
-        if (!claim.getEmployeeId().equals(currentUserId)) {
-            throw new ForbiddenException("You are not allowed to edit this claim");
-        }
-
-        if (claim.getStatus() != ClaimStatus.REJECTED) {
-            throw new BadRequestException("Only rejected claims can be edited and resubmitted");
-        }
-
-        validateAmount(req.getAmount());
-
-        claim.setAmount(req.getAmount());
-        claim.setDescription(req.getDescription());
-        claim.setDate(resolveAndValidateDate(req.getDate()));
-        claim.setStatus(ClaimStatus.SUBMITTED);
-        claim.setComments(null);
-
-        Claim saved = claimRepository.save(claim);
-
-        return ClaimMapper.toDTO(saved);
-    }
 
     /**
      * EMPLOYEE only.

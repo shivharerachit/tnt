@@ -66,7 +66,7 @@ function setupPage(pageName) {
         links[i].classList.remove('active');
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Show/hide Users link based on role
   let usersLink = document.getElementById('navUsers');
@@ -78,14 +78,14 @@ function setupPage(pageName) {
   // Wire up logout button
   let logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', function() {
+    logoutBtn.addEventListener('click', function () {
       clearSession();
     });
   }
 
   // Modal overlay click-to-close behavior
-  document.querySelectorAll('.modal-overlay').forEach(function(modal) {
-    modal.addEventListener('click', function(e) {
+  document.querySelectorAll('.modal-overlay').forEach(function (modal) {
+    modal.addEventListener('click', function (e) {
       if (e.target === modal) {
         modal.style.display = 'none';
         modal.classList.remove('active');
@@ -155,14 +155,14 @@ function callAPI(path, options) {
     if (sess && sess.userId) {
       headers['X-USER-ID'] = String(sess.userId);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   return fetch(url, {
     method: method,
     headers: headers,
     body: body
-  }).then(function(response) {
-    return response.text().then(function(text) {
+  }).then(function (response) {
+    return response.text().then(function (text) {
       let data = null;
       if (text) {
         try {
@@ -233,17 +233,12 @@ function showMessage(elementId, text, isError) {
   }
   // Auto-hide after 4 seconds for non-error messages
   if (!isError) {
-    setTimeout(function() { el.classList.add('hidden'); }, 4000);
+    setTimeout(function () { el.classList.add('hidden'); }, 4000);
   }
 }
 
-/**
- * Shared API promise rejection handler: show message, optional follow-up, clear session on auth-style errors.
- * @param {Error} error
- * @param {{ onAfterMessage?: function(Error): void, skipSessionClear?: boolean }} [options]
- */
-function handleAPIError(error, options) {
-  options = options || {};
+
+function handleAPIError(error) {
   let msg =
     error && typeof error.message === 'string'
       ? error.message
@@ -251,33 +246,21 @@ function handleAPIError(error, options) {
         ? String(error)
         : 'Request failed';
   showMessage('msg', msg, true);
-  if (typeof options.onAfterMessage === 'function') {
-    options.onAfterMessage(error);
-  }
-  if (!options.skipSessionClear) {
-    if (
-      msg.indexOf('User not found') !== -1 ||
-      msg.indexOf('Invalid') !== -1
-    ) {
-      clearSession();
-    }
-  }
 }
+
 
 function formatMoney(num) {
   if (!num && num !== 0) return '₹0.00';
   return '₹' + Number(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
-// --- Client-side email & password checks (align with backend where possible) ---
-/* Strictly more than 6 characters → minimum length 7 */
+// Client-side email & password checks (align with backend where possible)
+// Strictly more than 6 characters → minimum length 7
 const VALIDATION_PASSWORD_MIN_CHARS = 7;
 const VALIDATION_PASSWORD_MAX = 100;
 
-/**
- * Generic shape: one @, non-empty local part, domain with at least one dot (e.g. name@company.com).
- * Does NOT check allowed domain — only the backend should do that.
- */
+// Generic shape: one @, non-empty local part, domain with at least one dot (e.g. name@company.com).
+// Does NOT check allowed domain — only the backend should do that.
 function isGenericEmailPattern(email) {
   if (!email || typeof email !== 'string') return false;
   let e = email.trim();
@@ -294,10 +277,9 @@ function isGenericEmailPattern(email) {
   return true;
 }
 
-/**
- * Email format on the frontend; domain rules are backend-only.
- * @returns {string|null} error message, or null if OK
- */
+
+// Email format on the frontend, domain rules are backend-only.
+
 function validateEmail(email) {
   if (email == null || String(email).trim() === '') {
     return 'Please enter your email address.';
@@ -309,9 +291,8 @@ function validateEmail(email) {
   return null;
 }
 
-/**
- * Password: length only — more than 6 characters (7+), max 100. No letter/symbol rules.
- */
+// Password: length only — more than 6 characters (7+), max 100. No letter/symbol rules.
+
 function validatePassword(password) {
   if (password == null || typeof password !== 'string') {
     return 'Please enter your password.';

@@ -234,29 +234,6 @@ public class ClaimController {
 
     /**
      * @param claimId claim id
-     * @param req updates
-     * @param userIdHeader X-USER-ID
-     * @return resubmitted claim
-     */
-    @PutMapping("/{claimId}")
-    public StandardResponseDto<ClaimResponseDto> editAndResubmitClaim(
-            final @PathVariable Long claimId,
-            final @Valid @RequestBody ClaimRequestDto req,
-            final @RequestHeader("X-USER-ID") String userIdHeader) {
-
-        Long userId = getUserId(userIdHeader);
-
-        log.info("PUT /claims/{} resubmit callerUserId={}", claimId, userId);
-
-        ClaimResponseDto res = claimService.editAndResubmitClaim(claimId, req, userId);
-
-        log.info("PUT /claims/{} resubmit success callerUserId={}", claimId, userId);
-
-        return new StandardResponseDto<>(true, "Claim resubmitted successfully", res);
-    }
-
-    /**
-     * @param claimId claim id
      * @param userIdHeader X-USER-ID
      * @return claim if caller may see it
      */

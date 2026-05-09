@@ -179,45 +179,12 @@ public final class UserService {
             throw new BadRequestException("Assigned user is not a manager or admin");
         }
 
-        validateNoManagementCycle(user.getId(), manager);
-
         user.setManagerId(managerId);
 
         return UserMapper.toDTO(userRepository.save(user));
     }
 
-    /**
-     * Climb proposedManager → managerId chain; bail if we'd hit {@code userId} again or an existing ring.
-     *
-     * @param userId leaf user row id
-     * @param proposedManager would-be boss entity (already loaded)
-     */
-    private void validateNoManagementCycle(final Long userId, final User proposedManager) {
-        Set<Long> visited = new HashSet<>();
-        User cursor = proposedManager;
-
-        while (cursor != null) {
-            Long cursorId = cursor.getId();
-
-            if (cursorId != null && cursorId.equals(userId)) {
-                throw new BadRequestException("Invalid manager assignment: cycle detected");
-            }
-
-            if (cursorId != null && !visited.add(cursorId)) {
-                throw new BadRequestException("Invalid manager assignment: existing management cycle detected");
-            }
-
-            Long nextManagerId = cursor.getManagerId();
-            if (nextManagerId == null) {
-                break;
-            }
-
-            cursor = userRepository.findById(nextManagerId)
-                    .orElseThrow(() -> new BadRequestException(
-                            "Invalid manager chain: manager not found for id " + nextManagerId
-                    ));
-        }
-    }
+    
 
     /**
      * Hard delete row — beware FK fallout if claims still point here (DB rules win).

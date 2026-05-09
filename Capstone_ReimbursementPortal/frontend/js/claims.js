@@ -1,12 +1,9 @@
-/**
- * CLAIMS PAGE (ExpenseEase)
- *
- * Flow:
- * 1. loadUsers() for name lookup in the table.
- * 2. loadClaims() calls the paginated API with page, size, sort, and optional status
- *    (all applied in the database — not only on the current page).
- * 3. View / Review open modals using GET /claims/{id} so rows work even off-page.
- */
+// CLAIMS PAGE (ExpenseEase)
+// Flow:
+// 1. loadUsers() for name lookup in the table.
+// 2. loadClaims() calls the paginated API with page, size, sort, and optional status
+//    (all applied in the database — not only on the current page).
+// 3. View / Review open modals using GET /claims/{id} so rows work even off-page.
 
 setupPage("claims");
 
@@ -23,7 +20,7 @@ let filterStatusSelect = document.getElementById("filterStatus");
 let allUsers = [];
 let currentPage = 1;
 let totalPages = 1;
-/** Must match JPA field names on Claim (id, employeeId, title, amount, status, …) */
+// Must match JPA field names on Claim (id, employeeId, title, amount, status, …)
 let sortColumn = "id";
 let sortAsc = false;
 
@@ -69,9 +66,8 @@ function getUserName(userId) {
   return "#" + userId;
 }
 
-/**
- * Query string for Spring Data: page, size, sort=property,direction, optional status=ENUM
- */
+// Query string for Spring Data: page, size, sort=property,direction, optional status=ENUM
+
 function buildClaimsQueryString() {
   let pageSize = Number(sizeSelect.value);
   let parts = [];
@@ -79,9 +75,9 @@ function buildClaimsQueryString() {
   parts.push("size=" + encodeURIComponent(String(pageSize)));
   parts.push(
     "sort=" +
-      encodeURIComponent(sortColumn + "," + (sortAsc ? "asc" : "desc"))
+    encodeURIComponent(sortColumn + "," + (sortAsc ? "asc" : "desc"))
   );
-  /** Use claimStatus (not status) — avoids clashes with Spring sort/page machinery */
+  // Use claimStatus (not status) — avoids clashes with Spring sort/page machinery
   let statusVal = "";
   if (filterStatusSelect) {
     statusVal = String(filterStatusSelect.value || "").trim();
@@ -109,7 +105,7 @@ function buildActionButtonsHtml(claim, role) {
       '" data-action="review">Review</button>';
   }
 
-  if (role === ROLE.ADMIN) {
+  if (role === ROLE.ADMIN && claim.status === CLAIM_STATUS.SUBMITTED) {
     html +=
       '<button type="button" class="btn btn-outline-danger btn-sm" data-claim-id="' +
       claim.id +

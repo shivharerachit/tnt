@@ -118,29 +118,6 @@ class ClaimServiceTest {
         assertEquals("SUBMITTED", response.getStatus());
     }
 
-    @Test
-    void editAndResubmitClaim() {
-        ReflectionTestUtils.setField(claimService, "maxClaimAmount", 1000.0);
-        ClaimRequestDto req = new ClaimRequestDto();
-        req.setEmployeeId(2L);
-        req.setAmount(150.0);
-        req.setTitle("Travel");
-        req.setDescription("Updated description");
-        req.setDate(LocalDate.now());
-
-        User employee = user(2L, UserRole.EMPLOYEE);
-        Claim existing = claim(10L, 2L, 3L, ClaimStatus.REJECTED);
-        existing.setComments("Old comment");
-
-        when(userRepository.findById(2L)).thenReturn(Optional.of(employee));
-        when(claimRepository.findById(10L)).thenReturn(Optional.of(existing));
-        when(claimRepository.save(any(Claim.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        ClaimResponseDto response = claimService.editAndResubmitClaim(10L, req, 2L);
-
-        assertEquals("SUBMITTED", response.getStatus());
-        assertEquals("Updated description", response.getDescription());
-    }
 
     @Test
     void getMyClaims() {

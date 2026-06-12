@@ -1,5 +1,6 @@
-.env
+*.env
 **/Files
 **/Docs
-.env.local
-.idea
+*.env.local
+*.idea
+*.venv

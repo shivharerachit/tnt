@@ -6,7 +6,7 @@ caste it to integer and to store them in a variable. Also to print those
 variables.
 """
 
-name = input("Enter user's name: ")
-age = int(input("Enter user's age: "))
+name: str = input("Enter user's name: ")
+age: int = int(input("Enter user's age: "))
 
 print(f"Hello {name}!\nWelcome to Python Training\nYou are {age} years old.")

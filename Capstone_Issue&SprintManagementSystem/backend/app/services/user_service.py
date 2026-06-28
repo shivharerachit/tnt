@@ -2,7 +2,7 @@ from typing import Optional
 
 from pymongo.collection import Collection
 
-from backend.app.core.security import get_password_hash
+from backend.app.core.security import get_password_hash, verify_password
 from backend.app.models.user import User, UserCreate
 
 
@@ -20,3 +20,12 @@ def create_user(users: Collection, user_data: UserCreate) -> User:
     if not created:
         raise RuntimeError("Failed to find newly created user")
     return User(**created)
+
+
+def authenticate_user(users: Collection, email: str, password: str) -> Optional[User]:
+    user = get_user_by_email(users, email)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user

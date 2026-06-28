@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { registerUser } from "./auth";
+import { loginUser, registerUser } from "./auth";
 
 const initialForm = { name: "", email: "", password: "", role: "member" };
 

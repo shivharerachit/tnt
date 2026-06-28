@@ -1,10 +1,7 @@
+import AuthPage from "./AuthPage";
+
 function App() {
-  return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Issue & Sprint Management System</h1>
-      <p>Frontend is ready.</p>
-    </div>
-  )
+  return <AuthPage />;
 }
 
 export default App

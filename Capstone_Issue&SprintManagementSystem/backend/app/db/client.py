@@ -27,4 +27,7 @@ def close_mongo_connection() -> None:
 
 def get_db():
     """FastAPI dependency that returns the active database handle."""
+    global _db
+    if _db is None:
+        connect_to_mongo()
     return _db

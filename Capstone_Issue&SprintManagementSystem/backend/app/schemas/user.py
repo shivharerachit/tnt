@@ -23,5 +23,6 @@ class UserPublic(CamelModel):
     role: str
 
 class AuthResponse(CamelModel):
-    token: str
+    access_token: str = Field(alias="access_token", serialization_alias="access_token")
+    token_type: str = Field(alias="token_type", serialization_alias="token_type")
     user: UserPublic

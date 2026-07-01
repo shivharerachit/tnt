@@ -11,7 +11,7 @@ from ..db.utils import new_id
 def _public(user: dict) -> dict:
     """Return a user without the password hash."""
     return {
-        "id": user["_id"],
+        "id": str(user["_id"]),
         "name": user["name"],
         "email": user["email"],
         "role": user["role"],
@@ -38,7 +38,7 @@ def register(db, data) -> dict:
     db.users.insert_one(user)
 
     token = create_access_token(user["_id"], user["email"], user["role"])
-    return {"token": token, "user": _public(user)}
+    return {"access_token": token, "token_type": "bearer", "user": _public(user)}
 
 
 def login(db, data) -> dict:
@@ -48,4 +48,8 @@ def login(db, data) -> dict:
         raise UnauthorizedError("Invalid email or password.")
 
     token = create_access_token(user["_id"], user["email"], user["role"])
-    return {"token": token, "user": _public(user)}
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": _public(user),
+    }

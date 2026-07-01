@@ -10,4 +10,5 @@ def client():
     """
     Creates a TestClient for API testing.
     """
-    return TestClient(app)
+    with TestClient(app) as test_client:
+        yield test_client

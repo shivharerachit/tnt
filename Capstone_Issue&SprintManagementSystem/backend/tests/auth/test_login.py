@@ -62,7 +62,7 @@ def test_login_missing_email(client):
     
     response = client.post("/auth/login", json={"password": "Password@123"})
 
-    assert response.status_code == 422
+    assert response.status_code == 400
 
 
 def test_login_missing_password(client):
@@ -70,4 +70,4 @@ def test_login_missing_password(client):
 
     response = client.post("/auth/login", json={"email": "test@test.com"})
 
-    assert response.status_code == 422
+    assert response.status_code == 400

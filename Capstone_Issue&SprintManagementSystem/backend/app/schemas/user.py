@@ -1,15 +1,27 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Optional
+"""User-related request/response schemas."""
 
+from pydantic import EmailStr, Field
 
-class UserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: Optional[str]
+from ..constants import USER_ROLE
+from . import CamelModel
+
+class RegisterRequest(CamelModel):
+    name: str = Field(min_length=1)
+    email: EmailStr
+    password: str = Field(min_length=6)
+    role: str = Field(default=USER_ROLE["MEMBER"])
+    
+
+class LoginRequest(CamelModel):
+    email: EmailStr
+    password: str = Field(min_length=1)
+
+class UserPublic(CamelModel):
+    id: str
     name: str
     email: EmailStr
     role: str
 
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+class AuthResponse(CamelModel):
+    token: str
+    user: UserPublic

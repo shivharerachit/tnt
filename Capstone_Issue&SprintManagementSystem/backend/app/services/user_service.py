@@ -1,31 +1,51 @@
-from typing import Optional
+"""
+User service: registration, login and lookups.
+"""
 
-from pymongo.collection import Collection
-
-from backend.app.core.security import get_password_hash, verify_password
-from backend.app.models.user import User, UserCreate
-
-
-def get_user_by_email(users: Collection, email: str) -> Optional[User]:
-    result = users.find_one({"email": email})
-    return User(**result) if result else None
+from ..constants import USER_ROLE
+from ..core.exceptions import ConflictError, UnauthorizedError
+from ..core.security import create_access_token, hash_password, verify_password
+from ..db.utils import new_id
 
 
-def create_user(users: Collection, user_data: UserCreate) -> User:
-    hashed_password = str(get_password_hash(user_data.password))
-    user_dict = user_data.dict(exclude={"password"})
-    user_dict["hashed_password"] = hashed_password
-    result = users.insert_one(user_dict)
-    created = users.find_one({"_id": result.inserted_id})
-    if not created:
-        raise RuntimeError("Failed to find newly created user")
-    return User(**created)
+def _public(user: dict) -> dict:
+    """Return a user without the password hash."""
+    return {
+        "id": user["_id"],
+        "name": user["name"],
+        "email": user["email"],
+        "role": user["role"],
+    }
 
 
-def authenticate_user(users: Collection, email: str, password: str) -> Optional[User]:
-    user = get_user_by_email(users, email)
-    if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
+def register(db, data) -> dict:
+    """Create a new user and return a token + public user."""
+    existing = db.users.find_one({"email": data.email.lower()})
+    if existing:
+        raise ConflictError("A user with this email already exists.")
+    
+    if data.role not in USER_ROLE.values():
+        raise 
+
+    role = data.role if data.role in USER_ROLE.values() else USER_ROLE["MEMBER"]
+    user = {
+        "_id": new_id(),
+        "name": data.name,
+        "email": data.email.lower(),
+        "passwordHash": hash_password(data.password),
+        "role": role,
+    }
+    db.users.insert_one(user)
+
+    token = create_access_token(user["_id"], user["email"], user["role"])
+    return {"token": token, "user": _public(user)}
+
+
+def login(db, data) -> dict:
+    """Verify credentials and return a token + public user."""
+    user = db.users.find_one({"email": data.email.lower()})
+    if not user or not verify_password(data.password, user["passwordHash"]):
+        raise UnauthorizedError("Invalid email or password.")
+
+    token = create_access_token(user["_id"], user["email"], user["role"])
+    return {"token": token, "user": _public(user)}

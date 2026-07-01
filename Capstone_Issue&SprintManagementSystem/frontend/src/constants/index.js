@@ -7,7 +7,6 @@ export const USER_ROLE = {
 };
 
 export const STORAGE_KEYS = {
-  TOKEN: "ism_token",
-  USER: "ism_user",
-  DB: "ism_mock_db",
+  TOKEN: "iss_token",
+  USER: "iss_user"
 };

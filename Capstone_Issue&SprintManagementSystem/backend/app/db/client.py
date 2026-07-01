@@ -7,9 +7,6 @@ from pymongo import MongoClient
 
 from ..core.config import settings
 
-# client = MongoClient(MONGO_URI)
-# db = client[MONGO_DB]
-
 _client: MongoClient | None = None
 _db = None
 

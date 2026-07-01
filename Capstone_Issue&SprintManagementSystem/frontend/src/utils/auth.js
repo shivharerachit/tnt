@@ -1,10 +1,15 @@
 import { STORAGE_KEYS } from "../constants";
 
+function clearBrowserSession() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
+
 export function isAuthenticated() {
   return Boolean(localStorage.getItem(STORAGE_KEYS.TOKEN));
 }
 
 export function logout() {
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
+  clearBrowserSession();
   window.location.reload();
 }

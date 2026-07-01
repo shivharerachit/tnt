@@ -25,6 +25,10 @@ class UnauthorizedError(AppException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Authentication required."
 
+class ForbiddenError(AppException):
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "You do not have permission to perform this action."
+
 class ConflictError(AppException):
     status_code = status.HTTP_409_CONFLICT
     detail = "The request conflicts with the current state."

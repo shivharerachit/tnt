@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: str
 
+    SEED_DEMO_DATA: bool = True
+
     # READ DATA FROM ENVIRONMENT
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

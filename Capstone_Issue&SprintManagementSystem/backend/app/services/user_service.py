@@ -53,3 +53,12 @@ def login(db, data) -> dict:
         "token_type": "bearer",
         "user": _public(user),
     }
+
+def list_users(db) -> list[dict]:
+    """Return all users (without password hashes)."""
+    return [_public(u) for u in db.users.find()]
+
+
+def get_user(db, user_id: str):
+    user = db.users.find_one({"_id": user_id})
+    return _public(user) if user else None

@@ -31,6 +31,28 @@ def test_login_success(client):
     assert body["token_type"] == "bearer"
 
 
+def test_users_accepts_bearer_and_raw_token(client):
+    """Test /users with both Bearer and raw token headers."""
+
+    email = f"{uuid.uuid4()}@test.com"
+    password = "Password@123"
+
+    register_user(client, email, password)
+
+    login_response = client.post(
+        "/auth/login", json={"email": email, "password": password}
+    )
+    token = login_response.json()["access_token"]
+
+    bearer_response = client.get(
+        "/users", headers={"Authorization": f"Bearer {token}"}
+    )
+    raw_response = client.get("/users", headers={"Authorization": token})
+
+    assert bearer_response.status_code == 200
+    assert raw_response.status_code == 200
+
+
 def test_login_invalid_email(client):
     """Test login with invalid email."""
 

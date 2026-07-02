@@ -96,7 +96,7 @@ export default function LoginPage() {
             onChange={(value) => updateField("email", value)}
             onBlur={() => handleBlur("email", email)}
             error={touched.email ? errors.email : ""}
-            placeholder="you@example.com"
+            placeholder="Enter your email..."
             autoComplete="email"
           />
           <TextField

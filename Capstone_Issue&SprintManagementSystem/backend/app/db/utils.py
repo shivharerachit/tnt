@@ -20,3 +20,10 @@ def serialize(document: dict | None) -> dict | None:
     result = dict(document)
     result["id"] = result.pop("_id")
     return result
+
+
+def clean_optional(value):
+    """Treat empty strings as None (the frontend sends "" for 'no value')."""
+    if value == "":
+        return None
+    return value

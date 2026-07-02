@@ -4,6 +4,7 @@ Application configuration.
 All settings are read from environment variables (.env)
 Using a single Settings object
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
 
     DEFAULT_ADMIN_NAME: str = "Administrator"
     DEFAULT_ADMIN_EMAIL: str = "admin@company.com"
-    DEFAULT_ADMIN_PASSWORD: str = "password"
+    DEFAULT_ADMIN_PASSWORD: str = "Admin@123"
 
     # READ DATA FROM ENVIRONMENT
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -32,7 +33,9 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         """Turn the comma-separated CORS string into a clean list."""
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()
+        ]
 
 
 settings = Settings()

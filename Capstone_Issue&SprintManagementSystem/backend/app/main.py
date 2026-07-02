@@ -18,9 +18,9 @@ from .routers import auth, users, projects
 async def lifespan(_: FastAPI):
     # Startup: connect to MongoDB
     connect_to_mongo()
+    seed_default_admin(get_db())
     if settings.SEED_DEMO_DATA:
         seed_demo_data(get_db())
-    seed_default_admin(get_db())
     yield
     # Shutdown: close the connection
     close_mongo_connection()

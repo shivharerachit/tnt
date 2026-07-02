@@ -1,9 +1,10 @@
 """
 Security helpers: password hashing and JWT token creation/decoding.
 
-Passwords are hashed with bcrypt, and login returns a signed JWT 
+Passwords are hashed with bcrypt, and login returns a signed JWT
 that contains the user id, email, role and expiry.
 """
+
 from datetime import datetime, timedelta, timezone
 
 import bcrypt
@@ -44,6 +45,7 @@ def create_access_token(user_id: str, email: str, role: str) -> str:
         "exp": expire,
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+
 
 def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT. Raises 401 if the token is invalid/expired."""

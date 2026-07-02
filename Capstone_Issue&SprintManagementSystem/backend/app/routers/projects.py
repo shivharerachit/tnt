@@ -16,7 +16,9 @@ def list_projects(db=Depends(get_db), current_user: dict = Depends(get_current_u
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
-def get_project(project_id: str, db=Depends(get_db), _: dict = Depends(get_current_user)):
+def get_project(
+    project_id: str, db=Depends(get_db), _: dict = Depends(get_current_user)
+):
     return project_service.get_project(db, project_id)
 
 

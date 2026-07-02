@@ -8,6 +8,7 @@ match the frontend exactly, while our Python code stays snake_case-friendly.
 
 from pydantic import BaseModel, ConfigDict
 
+
 def to_camel(field_name: str) -> str:
     """Convert snake_case to camelCase (e.g. project_id -> projectId)."""
     parts = field_name.split("_")

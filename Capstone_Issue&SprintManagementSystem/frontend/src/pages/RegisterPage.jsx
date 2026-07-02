@@ -108,7 +108,7 @@ export default function RegisterPage() {
             onChange={(value) => updateField("name", value)}
             onBlur={() => handleBlur("name", form.name)}
             error={touched.name ? errors.name : ""}
-            placeholder="Jane Doe"
+            placeholder="Enter your name..."
           />
           <TextField
             label="Email"
@@ -117,7 +117,7 @@ export default function RegisterPage() {
             onChange={(value) => updateField("email", value)}
             onBlur={() => handleBlur("email", form.email)}
             error={touched.email ? errors.email : ""}
-            placeholder="you@example.com"
+            placeholder="Enter you mail..."
           />
           <TextField
             label="Password"

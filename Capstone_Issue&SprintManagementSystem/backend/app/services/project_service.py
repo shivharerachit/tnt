@@ -42,8 +42,6 @@ def update_members(db, project_id: str, member_ids: list[str]) -> dict:
     project = db.projects.find_one({"_id": project_id})
     if not project:
         raise NotFoundError("Project not found.")
-    db.projects.update_one(
-        {"_id": project_id}, {"$set": {"memberIds": member_ids}}
-    )
+    db.projects.update_one({"_id": project_id}, {"$set": {"memberIds": member_ids}})
     project["memberIds"] = member_ids
     return serialize(project)

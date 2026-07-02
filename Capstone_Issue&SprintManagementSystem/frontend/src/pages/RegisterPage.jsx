@@ -1,0 +1,142 @@
+// Registration screen.
+import { useState } from "react";
+import { Link, useNavigate } from "../lib/router";
+import { useAuth } from "../hooks/useAuth";
+import { validateEmail, validateName, validatePassword } from "../utils/validation";
+import { APP_CONFIG } from "../config/app-config";
+import TextField from "../components/TextField";
+import Button from "../components/Button";
+
+export default function RegisterPage() {
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    password: false,
+  });
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  function validateField(field, value) {
+    if (field === "name") {
+      return validateName(value);
+    }
+
+    if (field === "email") {
+      return validateEmail(value);
+    }
+
+    if (field === "password") {
+      return validatePassword(value);
+    }
+    return "";
+  }
+
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+
+    if (touched[field]) {
+      setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+    }
+
+    setError("");
+  }
+
+  function handleBlur(field, value) {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    const nextErrors = {
+      name: validateName(form.name),
+      email: validateEmail(form.email),
+      password: validatePassword(form.password),
+    };
+
+    setTouched({
+      name: true,
+      email: true,
+      password: true,
+    });
+    setErrors(nextErrors);
+
+    if (Object.values(nextErrors).some(Boolean)) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await signUp(form);
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="center-screen">
+      <div className="card auth-card">
+        <div className="auth-logo">
+          <h1 className="page-title">Create your account</h1>
+          <p className="text-muted">{APP_CONFIG.APP_NAME}</p>
+        </div>
+
+        {error && <p className="alert alert-error">{error}</p>}
+
+        <form onSubmit={handleSubmit} noValidate>
+          <TextField
+            label="Full name"
+            value={form.name}
+            onChange={(value) => updateField("name", value)}
+            onBlur={() => handleBlur("name", form.name)}
+            error={touched.name ? errors.name : ""}
+            placeholder="Enter your name..."
+          />
+          <TextField
+            label="Email"
+            type="email"
+            value={form.email}
+            onChange={(value) => updateField("email", value)}
+            onBlur={() => handleBlur("email", form.email)}
+            error={touched.email ? errors.email : ""}
+            placeholder="Enter you mail..."
+          />
+          <TextField
+            label="Password"
+            type="password"
+            value={form.password}
+            onChange={(value) => updateField("password", value)}
+            onBlur={() => handleBlur("password", form.password)}
+            error={touched.password ? errors.password : ""}
+            placeholder="Create a strong password"
+          />
+          <Button type="submit" block disabled={isSubmitting}>
+            {isSubmitting ? "Creating account..." : "Create account"}
+          </Button>
+        </form>
+
+        <p className="auth-hint">
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
+      </div>
+    </div>
+  );
+}

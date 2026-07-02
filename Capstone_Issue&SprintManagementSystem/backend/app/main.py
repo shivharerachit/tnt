@@ -2,27 +2,29 @@
 FastAPI application entry point.
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .core.exceptions import register_exception_handlers
 from .db.client import connect_to_mongo, close_mongo_connection, get_db
-from .db.seed import seed_demo_data, seed_admin
-from .routers import auth, users
+from .db.seed import seed_demo_data, seed_default_admin
+from .routers import auth, users, projects
 
+
+@asynccontextmanager
 async def lifespan(_: FastAPI):
     # Startup: connect to MongoDB
     connect_to_mongo()
     if settings.SEED_DEMO_DATA:
-        seed_admin(get_db())
         seed_demo_data(get_db())
-
-
+    seed_default_admin(get_db())
     yield
-
     # Shutdown: close the connection
     close_mongo_connection()
+
 
 app = FastAPI(
     title="Issue & Sprint Management System API",
@@ -45,6 +47,8 @@ register_exception_handlers(app)
 # Register all routers
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(projects.router)
+
 
 @app.get("/health")
 def health_check() -> dict[str, str]:

@@ -2,14 +2,12 @@
 
 from pydantic import EmailStr, Field
 
-from ..constants import USER_ROLE
 from . import CamelModel
 
 class RegisterRequest(CamelModel):
     name: str = Field(min_length=1)
     email: EmailStr
     password: str = Field(min_length=6)
-    role: str = Field(default=USER_ROLE["MEMBER"])
     
 
 class LoginRequest(CamelModel):
@@ -26,3 +24,16 @@ class AuthResponse(CamelModel):
     access_token: str = Field(alias="access_token", serialization_alias="access_token")
     token_type: str = Field(alias="token_type", serialization_alias="token_type")
     user: UserPublic
+
+class UpdateUserRequest(CamelModel):
+    name: str | None = Field(default=None, min_length=1)
+    email: EmailStr | None = None
+
+class RoleUpdateRequest(CamelModel):
+    role: str
+
+class UserListResponse(CamelModel):
+    items: list[UserPublic]
+    total: int
+    page: int
+    page_size: int

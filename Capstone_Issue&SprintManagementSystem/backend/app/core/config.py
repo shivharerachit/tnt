@@ -22,6 +22,10 @@ class Settings(BaseSettings):
 
     SEED_DEMO_DATA: bool = True
 
+    DEFAULT_ADMIN_NAME: str = "Administrator"
+    DEFAULT_ADMIN_EMAIL: str = "admin@company.com"
+    DEFAULT_ADMIN_PASSWORD: str = "password"
+
     # READ DATA FROM ENVIRONMENT
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

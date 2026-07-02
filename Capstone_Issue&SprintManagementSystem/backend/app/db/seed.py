@@ -1,11 +1,36 @@
 from ..constants import USER_ROLE
+from ..core.config import settings
 from ..core.security import hash_password
+from ..db.utils import new_id
+
+
+def seed_default_admin(db) -> None:
+    """Ensure a single default admin account always exists on startup.
+    """
+    existing_admin = db.users.find_one({"role": USER_ROLE["ADMIN"]})
+    if existing_admin:
+        return
+
+    email = settings.DEFAULT_ADMIN_EMAIL.lower()
+    # Avoid a duplicate-email clash if the address exists with another role.
+    if db.users.find_one({"email": email}):
+        return
+
+    db.users.insert_one(
+        {
+            "_id": new_id(),
+            "name": settings.DEFAULT_ADMIN_NAME,
+            "email": email,
+            "passwordHash": hash_password(settings.DEFAULT_ADMIN_PASSWORD),
+            "role": USER_ROLE["ADMIN"],
+        }
+    )
 
 
 def seed_demo_data(db) -> None:
     if db.users.count_documents({}) > 1:
         return
-    
+
     member_id = "user_member"
     member_id1 = "user_member1"
 

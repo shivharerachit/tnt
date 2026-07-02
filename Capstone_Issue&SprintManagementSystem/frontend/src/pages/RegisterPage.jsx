@@ -2,18 +2,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "../lib/router";
 import { useAuth } from "../hooks/useAuth";
-import { validateEmail, validateName, validatePassword, validateRole } from "../utils/validation";
-import { USER_ROLE } from "../constants";
+import { validateEmail, validateName, validatePassword } from "../utils/validation";
 import { APP_CONFIG } from "../config/app-config";
 import TextField from "../components/TextField";
-import SelectField from "../components/SelectField";
 import Button from "../components/Button";
-
-const ROLE_OPTIONS = [
-  { value: USER_ROLE.MEMBER, label: "Member" },
-  { value: USER_ROLE.ADMIN, label: "Admin" },
-  { value: USER_ROLE.VIEWER, label: "Viewer" },
-];
 
 export default function RegisterPage() {
   const { signUp } = useAuth();
@@ -23,19 +15,16 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    role: "",
   });
   const [errors, setErrors] = useState({
     name: "",
     email: "",
     password: "",
-    role: "",
   });
   const [touched, setTouched] = useState({
     name: false,
     email: false,
     password: false,
-    role: false,
   });
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,11 +41,6 @@ export default function RegisterPage() {
     if (field === "password") {
       return validatePassword(value);
     }
-
-    if (field === "role") {
-      return validateRole(value);
-    }
-
     return "";
   }
 
@@ -83,14 +67,12 @@ export default function RegisterPage() {
       name: validateName(form.name),
       email: validateEmail(form.email),
       password: validatePassword(form.password),
-      role: validateRole(form.role),
     };
 
     setTouched({
       name: true,
       email: true,
       password: true,
-      role: true,
     });
     setErrors(nextErrors);
 
@@ -145,15 +127,6 @@ export default function RegisterPage() {
             onBlur={() => handleBlur("password", form.password)}
             error={touched.password ? errors.password : ""}
             placeholder="Create a strong password"
-          />
-          <SelectField
-            label="Role"
-            value={form.role}
-            onChange={(value) => updateField("role", value)}
-            onBlur={() => handleBlur("role", form.role)}
-            error={touched.role ? errors.role : ""}
-            placeholder="Select a role"
-            options={ROLE_OPTIONS}
           />
           <Button type="submit" block disabled={isSubmitting}>
             {isSubmitting ? "Creating account..." : "Create account"}

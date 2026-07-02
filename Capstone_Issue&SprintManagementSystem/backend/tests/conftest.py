@@ -1,8 +1,16 @@
+import mongomock
 import pytest
-
 from fastapi.testclient import TestClient
 
-from backend.app.main import app
+from app.db.client import get_db
+from app.main import app
+
+
+@pytest.fixture
+def db():
+    """A fresh in-memory database for each test."""
+    client = mongomock.MongoClient()
+    return client["test_db"]
 
 
 @pytest.fixture

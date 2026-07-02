@@ -1,6 +1,17 @@
 import { APP_CONFIG } from "../config/app-config";
 import { STORAGE_KEYS } from "../constants";
 
+function clearBrowserSession() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
+
+function redirectToLogin() {
+  if (window.location.pathname !== "/login") {
+    window.location.replace("/login");
+  }
+}
+
 async function apiRequest(path, options = {}) {
   const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
 
@@ -37,6 +48,12 @@ async function apiRequest(path, options = {}) {
     const message =
       (data && (data.detail || data.message)) ||
       `Request failed with status ${response.status}`;
+
+    if (response.status === 401) {
+      clearBrowserSession();
+      redirectToLogin();
+    }
+
     throw new Error(message);
   }
 

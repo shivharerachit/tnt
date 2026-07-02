@@ -6,6 +6,19 @@ import * as authService from "../services/auth";
 
 const AuthContext = createContext(null);
 
+function clearBrowserSession() {
+  localStorage.clear();
+  sessionStorage.clear();
+}
+
+function extractToken(result) {
+  return result?.token || result?.access_token || result?.accessToken || "";
+}
+
+function extractUser(result) {
+  return result?.user || result?.data?.user || null;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,19 +44,32 @@ export function AuthProvider({ children }) {
 
   async function signIn(credentials) {
     const result = await authService.login(credentials);
-    saveSession(result.token, result.user);
-    return result.user;
+    const token = extractToken(result);
+    const nextUser = extractUser(result);
+
+    if (!token) {
+      throw new Error("Authentication token missing in login response.");
+    }
+
+    saveSession(token, nextUser);
+    return nextUser;
   }
 
   async function signUp(data) {
     const result = await authService.register(data);
-    saveSession(result.token, result.user);
-    return result.user;
+    const token = extractToken(result);
+    const nextUser = extractUser(result);
+
+    if (!token) {
+      throw new Error("Authentication token missing in register response.");
+    }
+
+    saveSession(token, nextUser);
+    return nextUser;
   }
 
   function signOut() {
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
+    clearBrowserSession();
     setUser(null);
   }
 

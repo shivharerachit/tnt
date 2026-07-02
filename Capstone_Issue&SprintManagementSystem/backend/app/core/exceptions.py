@@ -2,13 +2,15 @@
 Custom exception handling.
 
 We define some application exceptions, each mapped to an HTTP
-status code. A handler converts them into a consistent 
+status code. A handler converts them into a consistent
 JSON shape: { "detail": "Human readable message" }
 """
+
 from fastapi import FastAPI, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
 
 class AppException(Exception):
     """Base class for all expected application errors."""
@@ -21,9 +23,26 @@ class AppException(Exception):
             self.detail = detail
         super().__init__(self.detail)
 
+
+class BadRequestError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Bad request."
+
+
 class UnauthorizedError(AppException):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Authentication required."
+
+
+class ForbiddenError(AppException):
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "You do not have permission to perform this action."
+
+
+class NotFoundError(AppException):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "Resource not found."
+
 
 class ConflictError(AppException):
     status_code = status.HTTP_409_CONFLICT
